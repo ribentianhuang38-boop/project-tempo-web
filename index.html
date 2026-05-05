@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>塔罗·时光</title>
+    
+    <!-- PWA WebApp 沉浸式声明 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="塔罗时光">
+    <meta name="theme-color" content="#0d0d0f" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f4f4f6" media="(prefers-color-scheme: light)">
+    
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./assets/app-icon.png?v=13">
+
+    <!-- 引入高端中文字体栈 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { 
+            --gold: #d4af37; 
+            --font-occult: 'Didot', 'Bodoni MT', 'Noto Serif SC', 'Songti SC', serif;
+            --font-sans: system-ui, -apple-system, sans-serif;
+        }
+        .dark { 
+            --bg: #0d0d0f; --text: #e0e0e0; --card-bg: #1a1a1c; 
+            --particle-base: #ffffff; --particle-gold: #d4af37;
+        }
+        .light { 
+            --bg: #f4f4f6; --text: #2c2c2c; --card-bg: #ffffff; 
+            --particle-base: #6b6b6b; --particle-gold: #b89324;
+        }
+        body {
+            background-color: var(--bg); color: var(--text);
+            font-family: var(--font-sans);
+            transition: background-color 0.4s ease, color 0.4s ease;
+            user-select: none; -webkit-tap-highlight-color: transparent;
+            overflow: hidden; touch-action: none; 
+        }
+        
+        h1, h2, h3, .font-occult, #ai-text-container {
+            font-family: var(--font-occult) !important;
+            font-weight: 300;
+        }
+
+        .frosted {
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(212, 175, 55, 0.15); background: rgba(20, 20, 22, 0.65);
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+        .light .frosted { background: rgba(255, 255, 255, 0.75); border-color: rgba(212, 175, 55, 0.35); }
+        
+        canvas { position: absolute; top: 0; left: 0; z-index: 5; width: 100vw; height: 100vh; pointer-events: auto; }
+        .layer-10 { z-index: 10; } .layer-20 { z-index: 20; } .layer-40 { z-index: 40; }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .btn-hidden { transform: translate(-50%, 20px) scale(0.9); opacity: 0; pointer-events: none; }
+        .btn-reveal {
+            transform: translate(-50%, 0) scale(1); opacity: 1; pointer-events: auto;
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease-out;
+        }
+        
+        .mist-reveal {
+            opacity: 0;
+            animation: mistFade 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            will-change: filter, opacity, transform;
+        }
+        @keyframes mistFade {
+            0% { filter: blur(10px); opacity: 0; transform: translateY(8px); }
+            99% { filter: blur(0px); opacity: 1; transform: translateY(0); }
+            100% { filter: none; opacity: 1; transform: translateY(0); }
+        }
+
+        /* 🌟 为首页的箭头定制水平横向跳动动画 */
+        @keyframes pointLeft {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(-6px); }
+        }
+        .animate-point-left {
+            display: inline-block;
+            animation: pointLeft 1.5s ease-in-out infinite;
+        }
+
+        .safe-top-nav {
+            top: max(2rem, env(safe-area-inset-top));
+        }
+    </style>
+</head>
+<body class="dark h-screen w-screen relative">
+
+    <canvas id="tarotCanvas"></canvas>
+
+    <!-- 首页容器 -->
+    <div id="page-1" class="absolute inset-0 layer-10 flex flex-col items-center justify-center pointer-events-auto transition-opacity duration-500">
+        <div class="absolute left-6 right-6 flex justify-between items-start pointer-events-none safe-top-nav" id="top-nav">
+            <button id="theme-toggle" class="w-12 h-12 rounded-full frosted shadow-[0_0_15px_rgba(212,175,55,0.2)] active:scale-95 transition-transform pointer-events-auto flex items-center justify-center">
+                <span id="theme-icon" class="text-xl leading-none">🌙</span>
+            </button>
+            
+            <div id="profile-btn" class="w-12 h-12 rounded-full frosted flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.3)] active:scale-95 transition-transform cursor-pointer pointer-events-auto">
+                <svg class="w-6 h-6 text-[var(--gold)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                    <circle cx="12" cy="12" r="8"></circle>
+                    <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93"></path>
+                </svg>
+            </div>
+        </div>
+
+        <div id="start-drawing-area" class="w-64 h-80 rounded-2xl flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform mt-10">
+            <h1 class="text-4xl tracking-[0.2em] mb-2 text-[var(--gold)] font-occult" id="preview-spread-name">每日指引</h1>
+            <p class="text-[13px] opacity-60 tracking-widest mb-10 font-occult">点击中心唤醒牌阵</p>
+            <div class="w-14 h-14 rounded-full border border-[var(--gold)] flex items-center justify-center animate-pulse shadow-[0_0_20px_rgba(212,175,55,0.2)]">
+                <span class="text-[var(--gold)] text-xl font-light leading-none">✧</span>
+            </div>
+        </div>
+        
+        <!-- 🌟 重新设计的超强视觉焦点提示：字号微大、呼吸闪烁、水平箭头动态指引，且文案返璞归真 -->
+        <div class="absolute bottom-12 flex items-center text-[12px] text-[var(--gold)] opacity-70 tracking-[0.2em] font-occult animate-pulse">
+            <span class="animate-point-left mr-1 font-sans">←</span>
+            <span>向左滑动浏览牌阵</span>
+        </div>
+    </div>
+
+    <!-- 解牌模块 -->
+    <div id="decode-module" class="fixed bottom-10 left-[50%] layer-10 flex flex-col items-center btn-hidden w-[90%] max-w-sm">
+        <input type="text" id="user-question" placeholder="心中所惑，皆可发问" class="w-full mb-4 px-6 py-4 rounded-2xl frosted border border-[var(--gold)]/30 focus:border-[var(--gold)] text-center text-sm font-occult outline-none transition-all placeholder:text-[var(--text)] placeholder:opacity-30 shadow-lg">
+        <button id="decode-btn" class="bg-gradient-to-b from-[var(--card-bg)] to-black border border-[var(--gold)]/60 text-[var(--gold)] px-14 py-3.5 rounded-full text-sm font-bold tracking-[0.2em] cursor-pointer whitespace-nowrap shadow-[0_0_25px_rgba(212,175,55,0.25)] active:scale-95 transition-transform font-occult">
+            ✧ 唤醒神谕 ✧
+        </button>
+        <!-- 🌟 文案去比喻化：“星盘”还原为“牌阵” -->
+        <button id="skip-btn" class="mt-5 text-[11px] text-[var(--gold)] opacity-50 tracking-[0.2em] font-occult cursor-pointer active:scale-95 transition-transform">
+            ← 收起牌阵，返回大厅
+        </button>
+    </div>
+
+    <!-- 牌阵选择库 -->
+    <div id="page-2c" class="fixed inset-0 bg-[var(--bg)] translate-x-full transition-transform duration-500 layer-20 p-6 flex flex-col pointer-events-auto">
+        <div class="absolute left-6 z-50 pointer-events-auto safe-top-nav">
+            <button id="back-from-2c" class="text-[var(--gold)] text-lg tracking-widest cursor-pointer font-occult flex items-center h-12 leading-none p-2 -ml-2">← 归还</button>
+        </div>
+        <!-- 🌟 文案去比喻化：“星轨图鉴”还原为“牌阵图鉴” -->
+        <h2 class="text-3xl tracking-[0.1em] mb-8 text-[var(--gold)] mt-20 font-occult">牌阵图鉴</h2>
+        <div class="flex-1 overflow-y-auto space-y-4 pb-10 no-scrollbar" id="spread-list"></div>
+    </div>
+
+    <!-- 我的牌灵界面 -->
+    <div id="page-2a" class="fixed inset-0 translate-y-full transition-transform duration-500 layer-20 flex flex-col pointer-events-none opacity-0">
+        <div class="absolute left-6 z-50 pointer-events-auto safe-top-nav">
+            <button id="back-from-2a" class="text-[var(--gold)] text-lg tracking-widest cursor-pointer font-occult flex items-center h-12 leading-none p-2 -ml-2">← 大厅</button>
+        </div>
+        <div id="spirit-ui-text" class="absolute bottom-24 left-0 right-0 text-center pointer-events-none transition-opacity duration-500">
+            <p class="text-[var(--gold)] text-2xl tracking-[0.3em] mb-3 font-occult">灵境羁绊</p>
+            <p class="text-xs opacity-50 tracking-[0.1em] font-occult" id="spirit-subtitle">点击中心唤醒未知，或向左滑动自选</p>
+        </div>
+    </div>
+
+    <!-- AI 解牌结果页 -->
+    <div id="page-4b" class="fixed inset-0 bg-black/80 backdrop-blur-md translate-y-full transition-transform duration-700 layer-40 p-5 flex flex-col justify-center pointer-events-auto">
+        <div class="absolute left-6 z-50 pointer-events-auto safe-top-nav">
+            <button id="back-from-4b" class="text-[var(--gold)] text-lg tracking-widest cursor-pointer font-occult flex items-center h-12 leading-none p-2 -ml-2">← 闭卷</button>
+        </div>
+        <div class="w-full max-h-[80vh] mt-12 rounded-3xl frosted p-6 md:p-8 overflow-y-auto relative flex flex-col shadow-2xl border border-[var(--gold)]/30 no-scrollbar" id="ai-scroll-view">
+            <h3 class="text-[var(--gold)] text-sm tracking-[0.2em] mb-6 border-b border-[var(--gold)]/20 pb-4 shrink-0 text-center font-occult">命运密语 · 神谕</h3>
+            <div id="ai-text-container" class="text-[15px] opacity-90 leading-loose font-light whitespace-pre-wrap flex-1 pb-8 tracking-wide text-justify font-occult"></div>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = "https://uz8tmj4pw4.sealoshzh.site/TARRT";
+        const FONT_OCCULT = "'Didot', 'Bodoni MT', 'Noto Serif SC', 'Songti SC', serif";
+
+        const RAW_TAROT_DATA = [
+            { "name": "The Fool", "number": "0", "arcana": "Major Arcana", "suit": null, "img": "m00.jpg" },
+            { "name": "The Magician", "number": "1", "arcana": "Major Arcana", "suit": null, "img": "m01.jpg" },
+            { "name": "The High Priestess", "number": "2", "arcana": "Major Arcana", "suit": null, "img": "m02.jpg" },
+            { "name": "The Empress", "number": "3", "arcana": "Major Arcana", "suit": null, "img": "m03.jpg" },
+            { "name": "The Emperor", "number": "4", "arcana": "Major Arcana", "suit": null, "img": "m04.jpg" },
+            { "name": "The Hierophant", "number": "5", "arcana": "Major Arcana", "suit": null, "img": "m05.jpg" },
+            { "name": "The Lovers", "number": "6", "arcana": "Major Arcana", "suit": null, "img": "m06.jpg" },
+            { "name": "The Chariot", "number": "7", "arcana": "Major Arcana", "suit": null, "img": "m07.jpg" },
+            { "name": "Strength", "number": "8", "arcana": "Major Arcana", "suit": null, "img": "m08.jpg" },
+            { "name": "The Hermit", "number": "9", "arcana": "Major Arcana", "suit": null, "img": "m09.jpg" },
+            { "name": "Wheel of Fortune", "number": "10", "arcana": "Major Arcana", "suit": null, "img": "m10.jpg" },
+            { "name": "Justice", "number": "11", "arcana": "Major Arcana", "suit": null, "img": "m11.jpg" },
+            { "name": "The Hanged Man", "number": "12", "arcana": "Major Arcana", "suit": null, "img": "m12.jpg" },
+            { "name": "Death", "number": "13", "arcana": "Major Arcana", "suit": null, "img": "m13.jpg" },
+            { "name": "Temperance", "number": "14", "arcana": "Major Arcana", "suit": null, "img": "m14.jpg" },
+            { "name": "The Devil", "number": "15", "arcana": "Major Arcana", "suit": null, "img": "m15.jpg" },
+            { "name": "The Tower", "number": "16", "arcana": "Major Arcana", "suit": null, "img": "m16.jpg" },
+            { "name": "The Star", "number": "17", "arcana": "Major Arcana", "suit": null, "img": "m17.jpg" },
+            { "name": "The Moon", "number": "18", "arcana": "Major Arcana", "suit": null, "img": "m18.jpg" },
+            { "name": "The Sun", "number": "19", "arcana": "Major Arcana", "suit": null, "img": "m19.jpg" },
+            { "name": "Judgement", "number": "20", "arcana": "Major Arcana", "suit": null, "img": "m20.jpg" },
+            { "name": "The World", "number": "21", "arcana": "Major Arcana", "suit": null, "img": "m21.jpg" },
+            { "name": "Ace of Cups", "number": "1", "arcana": "Minor Arcana", "suit": "Cups", "img": "c01.jpg" },
+            { "name": "Two of Cups", "number": "2", "arcana": "Minor Arcana", "suit": "Cups", "img": "c02.jpg" }
+        ];
+
+        function toRoman(num) {
+            const roman = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V', 6: 'VI', 7: 'VII', 8: 'VIII', 9: 'IX', 10: 'X' };
+            return roman[num] || num;
+        }
+
+        const TAROT_DICT = RAW_TAROT_DATA.map((card, index) => {
+            let cardNum = parseInt(card.number);
+            let numLabel = "";
+            if (card.arcana === "Major Arcana") {
+                numLabel = card.name; 
+            } else {
+                if (cardNum <= 10) numLabel = `${toRoman(cardNum)} · ${card.suit[0]}`;
+                else numLabel = card.name;
+            }
+            let cnName = ["愚者","魔术师","女祭司","皇后","皇帝","教皇","恋人","战车","力量","隐士","命运之轮","正义","倒吊人","死神","节制","恶魔","高塔","星星","月亮","太阳","审判","世界"][index] || card.name;
+            return { id: index, num: numLabel, name: cnName, imgUrl: `./assets/cards/${card.img}` };
+        });
+
+        let mySpiritCard = null;
+        const savedSpiritId = localStorage.getItem('tarot_spirit_id');
+        if (savedSpiritId !== null) {
+            mySpiritCard = TAROT_DICT.find(c => c.id === parseInt(savedSpiritId)) || null;
+        }
+
+        const imageCache = {};
+        const fallbackImg = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80"; 
+        function preloadTarotImages() {
+            TAROT_DICT.forEach(card => {
+                const img = new Image(); img.src = card.imgUrl;
+                img.onload = () => { imageCache[card.id] = img; };
+                img.onerror = () => { 
+                    const fallback = new Image(); fallback.crossOrigin = "Anonymous"; fallback.src = fallbackImg;
+                    fallback.onload = () => { imageCache[card.id] = fallback; };
+                }; 
+            });
+        }
+        preloadTarotImages();
+
+        const PREDEFINED_SPREADS = [
+            { 
+                id: 'daily_one', name: '每日指引', desc: '单张牌阵，每日高频使用，获取今日核心启示。', 
+                slots: [{ id: 0, x: 0, y: 0, name: '今日核心' }],
+                aiPrompt: "这是一个「单张牌阵」。请直接给出今天最核心的运势指引，简明扼要，直击灵魂。"
+            },
+            { 
+                id: 'body_mind_spirit', name: '身心灵', desc: '三张牌阵，探寻身体、头脑与灵魂的内在状态。', 
+                slots: [{ id: 0, x: -1.2, y: 0.5, name: '身体(外在)' }, { id: 1, x: 1.2, y: 0.5, name: '头脑(思维)' }, { id: 2, x: 0, y: -0.8, name: '灵魂(潜意识)' }],
+                aiPrompt: "这是一个「身心灵」牌阵。请分别解析用户的外在身体行动、内在逻辑思维、以及深层的灵魂潜意识，指出三者的协调或冲突之处。"
+            },
+            { 
+                id: 'time_flow', name: '时光之流', desc: '三张牌阵，洞察过去、现在与未来的因果轨迹。', 
+                slots: [{ id: 0, x: -1.2, y: 0, name: '过去之因' }, { id: 1, x: 0, y: 0, name: '当下之果' }, { id: 2, x: 1.2, y: 0, name: '未来之势' }],
+                aiPrompt: "这是一个「时光之流」牌阵。请按时间线推演：从过去的执念或因果，过渡到当下的真实境遇，最后精准预判未来的发展趋势。"
+            },
+            { 
+                id: 'relationship', name: '情感羁绊', desc: '四张牌阵，深度剖析两人之间的关系现状与未来走向。', 
+                slots: [{ id: 0, x: -1.2, y: 0, name: '本我状态' }, { id: 1, x: 1.2, y: 0, name: '对方视角' }, { id: 2, x: 0, y: -1.0, name: '关系核心' }, { id: 3, x: 0, y: 1.1, name: '未来演变' }],
+                aiPrompt: "这是一个「情感羁绊」牌阵。请先分析问卜者自身的感情状态，接着剖析对方的真实想法与视角，随后指出这段关系的核心症结或纽带，最后预测关系未来的演变趋势。"
+            },
+            { 
+                id: 'career_compass', name: '事业罗盘', desc: '四张牌阵，迷茫时为你指明职场破局之路。', 
+                slots: [{ id: 0, x: 0, y: -1.2, name: '当前局势' }, { id: 1, x: -1.2, y: 0, name: '潜在挑战' }, { id: 2, x: 1.2, y: 0, name: '突破机遇' }, { id: 3, x: 0, y: 1.2, name: '最终成就' }],
+                aiPrompt: "这是一个「事业罗盘」牌阵。请一针见血地指出用户当前的职场或学业局势，分析隐藏的挑战与阻碍，点明破局的机遇所在，最后描绘出顺势而为能达成的最终成就。"
+            },
+            { 
+                id: 'cross', name: '灵感十字', desc: '五张牌阵，全面解析问题的核心、阻碍、过去与未来。', 
+                slots: [{ id: 0, x: 0, y: 0, name: '核心现状' }, { id: 1, x: -1.2, y: 0, name: '内部阻碍' }, { id: 2, x: 1.2, y: 0, name: '外部助力' }, { id: 3, x: 0, y: -1.2, name: '过去成因' }, { id: 4, x: 0, y: 1.2, name: '最终结果' }],
+                aiPrompt: "这是一个「灵感十字」五张牌阵。请综合分析用户的核心现状，点明阻力与助力，追溯成因，并最终给出解决问题的终极指引。"
+            },
+            { 
+                id: 'two_choices', name: '二选一', desc: '五张牌阵，面临两条道路时，指引不同选择的走向。', 
+                slots: [{ id: 0, x: 0, y: 1.2, name: '当前处境' }, { id: 1, x: -1.3, y: 0.1, name: '选择A:现状' }, { id: 2, x: -1.3, y: -1.1, name: '选择A:结果' }, { id: 3, x: 1.3, y: 0.1, name: '选择B:现状' }, { id: 4, x: 1.3, y: -1.1, name: '选择B:结果' }],
+                aiPrompt: "这是一个「二选一」牌阵。请先分析用户的当前处境，然后严谨客观地对比【选择A】与【选择B】的现状及最终走向，最后给出高维视角的倾向性建议。"
+            },
+            {
+                id: 'hexagram', name: '六芒星神谕', desc: '七张牌阵，探寻宿命的深度因果与终极奥义。',
+                slots: [
+                    { id: 0, x: -1.0, y: -0.7, name: '过去(执念)' }, { id: 1, x: 1.0, y: -0.7, name: '现在(实相)' }, { id: 2, x: -1.0, y: 0.7, name: '未来(幻象)' }, 
+                    { id: 3, x: 1.0, y: 0.7, name: '环境(外缘)' }, { id: 4, x: 0, y: -1.4, name: '阻碍(业力)' }, { id: 5, x: 0, y: 1.4, name: '建议(解药)' }, { id: 6, x: 0, y: 0, name: '终极神谕' }
+                ],
+                aiPrompt: "这是一个最高阶的「六芒星神谕」七张牌阵。请进行深度灵性解读：串联过去执念、现在实相与未来幻象的时间轴；分析外部环境与内在业力(阻碍)的撕扯；给出化解困境的灵性解药；最终由位于中心的卡牌给出命运的终极神谕结论。请以大师的口吻，语言需极具穿透力。"
+            }
+        ];
+        
+        let currentActiveSpread = PREDEFINED_SPREADS[0]; 
+        let lastDrawTime = 0; 
+
+        const dom = {
+            themeBtn: document.getElementById('theme-toggle'), themeIcon: document.getElementById('theme-icon'),
+            p1: document.getElementById('page-1'), p2c: document.getElementById('page-2c'),
+            p2a: document.getElementById('page-2a'), p4b: document.getElementById('page-4b'), 
+            decodeModule: document.getElementById('decode-module'),
+            previewName: document.getElementById('preview-spread-name'), spreadList: document.getElementById('spread-list'),
+            spiritText: document.getElementById('spirit-ui-text'), spiritSub: document.getElementById('spirit-subtitle')
+        };
+
+        let isDarkMode = true;
+        
+        dom.themeBtn.onclick = () => {
+            isDarkMode = !isDarkMode;
+            document.body.className = isDarkMode ? 'dark h-screen w-screen relative' : 'light h-screen w-screen relative';
+            dom.themeIcon.innerText = isDarkMode ? '🌙' : '☀️';
+            particles.forEach(p => p.syncThemeColor(isDarkMode));
+        };
+
+        let globalDrag = false, globalStartX = 0;
+        const startGlobalDrag = (e) => {
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('#profile-btn') || e.target.closest('#page-2c')) return;
+            globalDrag = true; globalStartX = e.clientX || (e.touches && e.touches[0].clientX);
+        };
+        const endGlobalDrag = (e) => {
+            if (!globalDrag) return; globalDrag = false;
+            let endX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
+            if (appPhase === 'idle' && globalStartX - endX > 60) dom.p2c.style.transform = 'translateX(0)';
+            if ((appPhase === 'spirit_intro' || appPhase === 'spirit_revealed') && globalStartX - endX > 60) { 
+                dom.spiritText.style.opacity = '0'; 
+                startSpiritCarousel(); 
+            }
+        };
+        document.addEventListener('touchstart', startGlobalDrag); document.addEventListener('mousedown', startGlobalDrag);
+        document.addEventListener('touchend', endGlobalDrag); document.addEventListener('mouseup', endGlobalDrag);
+        
+        document.getElementById('back-from-2c').onclick = () => dom.p2c.style.transform = 'translateX(100%)';
+        
+        document.getElementById('skip-btn').onclick = () => {
+            dom.decodeModule.classList.remove('btn-reveal');
+            dom.decodeModule.classList.add('btn-hidden');
+            dom.p1.style.opacity = '1';
+            dom.p1.style.pointerEvents = 'auto';
+            appPhase = 'idle';
+            spreadCards = []; 
+            movingCards = [];
+            particles = [];
+            coreEnergy = 0;
+            coreRadius = 0;
+        };
+        
+        let spiritScale = 0; 
+        let spiritFlipProgress = 0;
+
+        document.getElementById('profile-btn').onclick = () => {
+            dom.p1.style.opacity = '0';
+            dom.p1.style.pointerEvents = 'none';
+            dom.p2a.classList.remove('translate-y-full'); 
+            dom.p2a.style.opacity = '1'; 
+            dom.spiritText.style.opacity = '1'; 
+            
+            spiritScale = 0; 
+            spiritFlipProgress = 0;
+            
+            if (mySpiritCard) {
+                appPhase = 'spirit_revealed';
+                dom.spiritSub.innerText = "灵境已连结，向左滑动可重铸契约";
+            } else {
+                appPhase = 'spirit_intro'; 
+                dom.spiritSub.innerText = "点击中心唤醒未知，或向左滑动自选";
+            }
+        };
+        
+        document.getElementById('back-from-2a').onclick = () => {
+            dom.p2a.style.opacity = '0';
+            appPhase = 'spirit_exit'; 
+        };
+
+        function renderSpreadList() {
+            dom.spreadList.innerHTML = PREDEFINED_SPREADS.map(spread => `<div class="frosted p-5 rounded-2xl cursor-pointer active:scale-95 transition-transform border border-transparent ${currentActiveSpread.id === spread.id ? '!border-[var(--gold)]' : ''}" onclick="selectSpread('${spread.id}')"><h3 class="text-[var(--gold)] text-xl mb-1 font-occult">${spread.name}</h3><p class="text-[13px] opacity-60 font-occult">${spread.desc}</p></div>`).join('');
+        }
+        window.selectSpread = (id) => { currentActiveSpread = PREDEFINED_SPREADS.find(s => s.id === id); dom.previewName.innerText = currentActiveSpread.name; dom.p2c.style.transform = 'translateX(100%)'; renderSpreadList(); };
+        renderSpreadList();
+
+        document.getElementById('start-drawing-area').onclick = () => {
+            dom.p1.style.opacity = '0';
+            setTimeout(() => { dom.p1.style.pointerEvents = 'none'; startDrawingPhase(); }, 300);
+        };
+
+        async function fetchAIResponse(prompt, container, scrollView) {
+            // 🌟 移除多余的比喻
+            container.innerHTML = `<div class="mist-reveal text-center mt-10 font-occult">正在解析牌阵，聆听命运的启示...</div>`;
+            try {
+                const response = await fetch(BACKEND_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                const result = await response.json();
+                if (result.choices && result.choices[0].message) {
+                    const fullText = result.choices[0].message.content;
+                    const paragraphs = fullText.split('\n').filter(p => p.trim() !== "");
+                    container.innerHTML = "";
+                    
+                    paragraphs.forEach((p, index) => {
+                        const pEl = document.createElement('div');
+                        pEl.className = "mist-reveal mb-5 font-occult";
+                        pEl.style.animationDelay = `${index * 0.3}s`; 
+                        pEl.innerText = p;
+                        container.appendChild(pEl);
+                    });
+                    
+                    setTimeout(() => { scrollView.scrollTop = scrollView.scrollHeight; }, paragraphs.length * 300 + 500);
+                } else {
+                    container.innerHTML = "能量连接异常，未获得有效启示。";
+                }
+            } catch (error) {
+                container.innerHTML = "连接中断，请检查网络或后端配置。";
+            }
+        }
+
+        document.getElementById('decode-btn').onclick = () => {
+            dom.p4b.style.transform = 'translateY(0)';
+            dom.decodeModule.classList.remove('btn-reveal');
+            dom.decodeModule.classList.add('btn-hidden');
+
+            const userQuestion = document.getElementById('user-question').value.trim();
+            
+            let prompt = "";
+            if (mySpiritCard) {
+                prompt += `【系统最高指令：你的身份是我的专属牌灵“${mySpiritCard.name}”。请完全进入角色，以该牌灵的独特第一人称口吻与性格为我解牌，语气要精简、具有神秘学深度。】\n\n`;
+            } else {
+                prompt += `【提示：要求回答精炼，直指要害，语气充满诗意和神秘感。】\n\n`;
+            }
+            
+            prompt += `【牌阵专属解读法则】：${currentActiveSpread.aiPrompt}\n\n`;
+            
+            prompt += `用户意图：${userQuestion ? userQuestion : '未发问，请直接给出现阶段的命运启示'}\n牌面内容：\n`;
+            spreadCards.forEach((c, index) => {
+                prompt += `- [位置：${currentActiveSpread.slots[index].name}]：${c.tarotData.name} (${c.isReversed ? '逆位' : '正位'})\n`;
+            });
+
+            fetchAIResponse(prompt, document.getElementById('ai-text-container'), document.getElementById('ai-scroll-view'));
+        };
+        
+        document.getElementById('back-from-4b').onclick = () => location.reload(); 
+
+        const canvas = document.getElementById('tarotCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, appPhase = 'idle'; 
+        let CARD_WIDTH, CARD_HEIGHT, particles = [], convergeStartTime = 0; 
+        let coreEnergy = 0, coreRadius = 0, targetCoreY = 0;  
+        const CONVERGE_DURATION = 1500;
+
+        function resize() {
+            width = window.innerWidth; height = window.innerHeight;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = width * dpr; canvas.height = height * dpr;
+            ctx.scale(dpr, dpr);
+            CARD_WIDTH = Math.min(width * 0.18, 80); 
+            CARD_HEIGHT = CARD_WIDTH * 1.75;
+            targetCoreY = height * 0.85; 
+        }
+        window.addEventListener('resize', resize); resize();
+
+        const easeOutBack = (x) => { const c1 = 1.70158; const c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+
+        class LightParticle {
+            constructor(x, y, isExplosion = false) {
+                this.x = x + (Math.random() - 0.5) * CARD_WIDTH * (isExplosion ? 0.5 : 1.5); 
+                this.y = y + (Math.random() - 0.5) * CARD_HEIGHT * (isExplosion ? 0.5 : 1.5);
+                let speedMulti = isExplosion ? 8 : 1;
+                this.vx = (Math.random() - 0.5) * 1.5 * speedMulti; this.vy = ((Math.random() - 0.5) * 1.5 - (isExplosion ? 0 : 0.5)) * speedMulti; 
+                this.baseVx = this.vx; this.baseVy = this.vy; this.life = 1.0; this.absorbed = false; 
+                this.size = Math.random() > 0.95 ? Math.random() * 2.0 + 1.0 : Math.random() * 0.8 + 0.2; 
+                this.isGold = Math.random() > 0.7; this.phaseOffset = Math.random() * 100;
+                this.isExplosion = isExplosion; 
+                this.syncThemeColor(isDarkMode); 
+            }
+            syncThemeColor(isDark) { 
+                this.colorBase = isDark ? '#ffffff' : '#6b6b6b';
+                this.colorGold = isDark ? '#d4af37' : '#b89324';
+            }
+            update(appPhase) {
+                if (this.absorbed) return;
+                this.phaseOffset += 0.03; 
+                if (appPhase === 'converging') {
+                    let dx = width / 2 - this.x; let dy = targetCoreY - this.y; let dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < 15) { this.absorbed = true; this.life = 0; coreEnergy += this.size * 2; return; }
+                    let progress = Math.min(1, (Date.now() - convergeStartTime) / CONVERGE_DURATION);
+                    let exponentialPull = Math.pow(progress, 3) * 1.5; let swirlX = -dy / (dist || 1); let swirlY = dx / (dist || 1);
+                    let pull = 0.01 + exponentialPull;
+                    this.vx += dx * pull + swirlX * (1 - progress) * 1.5; this.vy += dy * pull + swirlY * (1 - progress) * 1.5;
+                    let maxSpeed = 15 * progress + 2; let currentSpeed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
+                    if (currentSpeed > maxSpeed) { this.vx = (this.vx / currentSpeed) * maxSpeed; this.vy = (this.vy / currentSpeed) * maxSpeed; }
+                    this.vx *= 0.94; this.vy *= 0.94;
+                } else if (this.isExplosion) { this.vx *= 0.92; this.vy *= 0.92; this.life -= 0.02; } 
+                else { this.vx = this.baseVx + Math.sin(this.phaseOffset) * 0.2; this.vy = this.baseVy + Math.cos(this.phaseOffset * 0.7) * 0.2; if (this.x < width * 0.1) this.vx += 0.02; if (this.x > width * 0.9) this.vx -= 0.02; if (this.y < height * 0.1) this.vy += 0.02; if (this.y > height * 0.9) this.vy -= 0.02; this.life -= 0.003; }
+                this.x += this.vx; this.y += this.vy;
+            }
+            draw(ctx) { if (this.life <= 0 || this.absorbed) return; ctx.globalAlpha = this.life * (appPhase === 'converging' ? 0.9 : 0.6); ctx.fillStyle = this.isGold ? this.colorGold : this.colorBase; ctx.fillRect(this.x, this.y, this.size, this.size); }
+        }
+
+        let carouselRotation = 0, targetRotation = 0;
+        let availableCards = [], spreadCards = [], movingCards = [];
+
+        function startDrawingPhase() { appPhase = 'drawing'; spreadCards = []; movingCards = []; particles = []; coreEnergy = 0; coreRadius = 0; carouselRotation = 0; targetRotation = 0; let shuffledDict = [...TAROT_DICT].sort(() => Math.random() - 0.5); availableCards = Array.from({length: 22}, (_, i) => ({ id: i, selected: false, tarotData: shuffledDict[i] })); }
+        function startSpiritCarousel() { appPhase = 'spirit_carousel'; carouselRotation = 0; targetRotation = 0; availableCards = TAROT_DICT.slice(0, 22).map((tarotData, i) => ({ id: i, selected: false, tarotData: tarotData })); }
+        
+        function getSlotCoords(index, isExpanded) { 
+            const slot = currentActiveSpread.slots[index]; 
+            const slotCount = currentActiveSpread.slots.length;
+            
+            let responsiveFactor = 1;
+            if (slotCount === 4) responsiveFactor = 0.85;
+            else if (slotCount === 5) responsiveFactor = 0.75;
+            else if (slotCount >= 6) responsiveFactor = 0.65;
+            
+            if (width < 400 && slotCount >= 3) responsiveFactor *= 0.85; 
+            
+            const spreadScale = (isExpanded ? 1.4 : 0.9) * responsiveFactor; 
+            const baseY = isExpanded ? height * 0.4 : height * 0.35; 
+            const spacingX = CARD_WIDTH * 1.35 * spreadScale; 
+            const spacingY = CARD_HEIGHT * 1.15 * spreadScale; 
+            return { x: width / 2 + slot.x * spacingX, y: baseY + slot.y * spacingY, scale: spreadScale }; 
+        }
+
+        function getRenderedCarouselCards(isBig = false) {
+            let cardsData = []; const radius = isBig ? width * 0.65 : width * 0.45; const centerY = isBig ? height * 0.6 : height * 0.85;
+            availableCards.forEach((card, i) => {
+                if (card.selected) return;
+                const angle = (i / availableCards.length) * Math.PI * 2 + carouselRotation;
+                const z = Math.cos(angle); const x = width / 2 + Math.sin(angle) * radius; const y = centerY + z * (isBig ? 20 : 10); 
+                const scale = (isBig ? 1.2 : 0.6) + ((z + 1) / 2) * (isBig ? 0.7 : 0.4);
+                cardsData.push({ index: i, x, y, scale, z, id: card.id, tarotData: card.tarotData });
+            });
+            return cardsData.sort((a, b) => a.z - b.z);
+        }
+
+        let isCanvasDragging = false, lastX = 0, clickStartTime = 0, hasMoved = false;
+        const canvasPointerDown = (e) => { 
+            if(appPhase === 'idle' || appPhase === 'finished' || appPhase === 'expanding' || appPhase === 'converging' || appPhase === 'spirit_revealing') return; 
+            isCanvasDragging = true; hasMoved = false; lastX = e.clientX || (e.touches && e.touches[0].clientX); clickStartTime = Date.now(); 
+        };
+        const canvasPointerMove = (e) => { 
+            if(!isCanvasDragging) return; let currentX = e.clientX || (e.touches && e.touches[0].clientX); if(Math.abs(currentX - lastX) > 5) hasMoved = true; 
+            if((appPhase === 'drawing' || appPhase === 'spirit_carousel') && hasMoved) { targetRotation += (currentX - lastX) * 0.012; lastX = currentX; } 
+        };
+        const canvasPointerUp = (e) => { 
+            if(!isCanvasDragging) return; isCanvasDragging = false; 
+            if(!hasMoved && Date.now() - clickStartTime < 300) { checkClick(e.clientX || (e.changedTouches && e.changedTouches[0].clientX), e.clientY || (e.changedTouches && e.changedTouches[0].clientY)); } 
+        };
+        canvas.addEventListener('touchstart', canvasPointerDown, {passive:false}); canvas.addEventListener('touchmove', canvasPointerMove, {passive:false}); canvas.addEventListener('touchend', canvasPointerUp);
+        canvas.addEventListener('mousedown', canvasPointerDown); canvas.addEventListener('mousemove', canvasPointerMove); canvas.addEventListener('mouseup', canvasPointerUp);
+
+        function checkClick(x, y) {
+            if (appPhase === 'drawing') {
+                if (Date.now() - lastDrawTime < 500) return; 
+                if (spreadCards.length >= currentActiveSpread.slots.length) return;
+                const renderedCards = getRenderedCarouselCards();
+                for (let i = renderedCards.length - 1; i >= 0; i--) { 
+                    const c = renderedCards[i]; 
+                    if (x > c.x - (CARD_WIDTH*c.scale)/2 && x < c.x + (CARD_WIDTH*c.scale)/2 && y > c.y - (CARD_HEIGHT*c.scale)/2 && y < c.y + (CARD_HEIGHT*c.scale)/2) { 
+                        lastDrawTime = Date.now(); drawCard(c.id, c.x, c.y, c.scale); break; 
+                    } 
+                }
+            } else if (appPhase === 'interacting') {
+                spreadCards.forEach((sc, i) => { const coords = getSlotCoords(i, true); if (sc.flipProgress === 0 && Math.abs(x - coords.x) < CARD_WIDTH && Math.abs(y - coords.y) < CARD_HEIGHT) sc.isFlipping = true; });
+            } else if (appPhase === 'spirit_intro') {
+                const cx = width / 2, cy = height / 2 - 40; 
+                if (Math.abs(x - cx) < CARD_WIDTH && Math.abs(y - cy) < CARD_HEIGHT) { 
+                    if (!mySpiritCard) { 
+                        mySpiritCard = TAROT_DICT[Math.floor(Math.random() * 22)]; 
+                        localStorage.setItem('tarot_spirit_id', mySpiritCard.id);
+                        appPhase = 'spirit_revealing'; 
+                        for(let i=0; i<80; i++) particles.push(new LightParticle(cx, cy, true)); 
+                    } 
+                }
+            } else if (appPhase === 'spirit_carousel') {
+                if (Date.now() - lastDrawTime < 500) return;
+                const renderedCards = getRenderedCarouselCards(true);
+                for (let i = renderedCards.length - 1; i >= 0; i--) { 
+                    const c = renderedCards[i]; 
+                    if (x > c.x - (CARD_WIDTH*c.scale)/2 && x < c.x + (CARD_WIDTH*c.scale)/2 && y > c.y - (CARD_HEIGHT*c.scale)/2 && y < c.y + (CARD_HEIGHT*c.scale)/2) { 
+                        lastDrawTime = Date.now();
+                        mySpiritCard = c.tarotData; 
+                        localStorage.setItem('tarot_spirit_id', mySpiritCard.id);
+                        appPhase = 'spirit_revealing'; 
+                        for(let k=0; k<80; k++) particles.push(new LightParticle(width/2, height/2 - 40, true)); 
+                        break; 
+                    } 
+                }
+            }
+        }
+
+        function drawCard(id, startX, startY, startScale) {
+            const card = availableCards.find(c => c.id === id); card.selected = true;
+            const slotIndex = spreadCards.length; const target = getSlotCoords(slotIndex, false);
+            movingCards.push({ id: card.id, startX: startX, startY: startY, startScale: startScale, targetX: target.x, targetY: target.y, targetScale: target.scale, progress: 0 });
+            spreadCards.push({ id: card.id, tarotData: card.tarotData, isReversed: Math.random() > 0.5, flipProgress: 0, isFlipping: false, textProgress: 0 });
+            if(spreadCards.length === currentActiveSpread.slots.length) setTimeout(startExpansion, 500);
+        }
+
+        function startExpansion() { 
+            appPhase = 'expanding'; 
+            spreadCards.forEach((sc, i) => { const current = getSlotCoords(i, false); const target = getSlotCoords(i, true); movingCards.push({ id: sc.id, startX: current.x, startY: current.y, startScale: current.scale, targetX: target.x, targetY: target.y, targetScale: target.scale, progress: 0 }); }); 
+            setTimeout(() => { appPhase = 'interacting'; }, 800); 
+        }
+
+        function drawGraphic(x, y, scale, isPlaceholder = false, flipProgress = 0, textProgress = 0, tarotData = null, isReversed = false, hideBackDecor = false, isFocused = false) {
+            ctx.save(); ctx.translate(x, y); 
+            
+            let breathe = 0;
+            if (isFocused && isPlaceholder) {
+                breathe = (Math.sin(Date.now() / 150) + 1) / 2;
+            }
+
+            const flipScale = Math.cos(flipProgress * Math.PI); 
+            ctx.scale(scale * flipScale, scale);
+            const w = CARD_WIDTH, h = CARD_HEIGHT; const isDark = isDarkMode;
+            
+            if (isPlaceholder) { 
+                ctx.fillStyle = isDark ? '#111114' : '#e5e5e5'; 
+                ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8); ctx.fill(); 
+                
+                if (isFocused) {
+                    ctx.save();
+                    ctx.shadowBlur = 10 + 15 * breathe;
+                    ctx.shadowColor = 'rgba(212, 175, 55, 0.8)';
+                    ctx.strokeStyle = `rgba(212, 175, 55, ${0.5 + 0.5 * breathe})`;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.restore();
+                } else {
+                    ctx.setLineDash([5, 5]); 
+                    ctx.strokeStyle = isDark ? 'rgba(212, 175, 55, 0.3)' : 'rgba(212, 175, 55, 0.6)'; 
+                    ctx.stroke(); 
+                }
+            } 
+            else if (flipScale >= 0) { 
+                const grad = ctx.createLinearGradient(-w/2, -h/2, w/2, h/2); grad.addColorStop(0, isDark ? '#1c1c24' : '#ffffff'); grad.addColorStop(1, isDark ? '#0a0a0c' : '#f0f0f0'); ctx.fillStyle = grad; ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8); ctx.fill(); 
+                
+                ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8);
+                ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 1.5; ctx.stroke(); 
+                
+                if(hideBackDecor) { ctx.fillStyle = 'var(--gold)'; ctx.font = `lighter ${Math.floor(CARD_WIDTH * 0.8)}px 'Didot', serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('O', 0, 0); } 
+            } else { 
+                ctx.scale(-1, 1); 
+                
+                ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8);
+                
+                if (tarotData && imageCache[tarotData.id]) { 
+                    ctx.save(); ctx.clip(); 
+                    if (isReversed) ctx.rotate(Math.PI); 
+                    
+                    const zoom = 1.18; 
+                    const dw = w * zoom, dh = h * zoom;
+                    ctx.drawImage(imageCache[tarotData.id], -dw/2, -dh/2, dw, dh); 
+                    
+                    ctx.beginPath();
+                    ctx.roundRect(-w/2 + 5, -h/2 + 5, w - 10, h - 10, 4);
+                    ctx.strokeStyle = 'rgba(212, 175, 55, 0.6)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    
+                    ctx.restore(); 
+                } 
+                else { ctx.fillStyle = isDark ? '#111114' : '#e5e5e5'; ctx.fill(); }
+                
+                ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8);
+                ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 1.5; ctx.stroke();
+
+                if (tarotData && textProgress > 0.01) { 
+                    ctx.save(); let t = easeOutBack(textProgress); let startX = w/2 - 20; let endX = w/2 + 8; let currentX = startX + (endX - startX) * t; 
+                    ctx.translate(currentX, 0); ctx.rotate(Math.PI / 2); 
+                    let label = tarotData.num; if(isReversed) label += " (逆)"; 
+                    
+                    let fontSize = 20;
+                    ctx.font = `lighter ${fontSize}px ${FONT_OCCULT}`; 
+                    let textMetrics = ctx.measureText(label);
+                    let maxLen = h * 0.85; 
+                    if (textMetrics.width > maxLen) {
+                        fontSize = fontSize * (maxLen / textMetrics.width);
+                        ctx.font = `lighter ${fontSize}px ${FONT_OCCULT}`;
+                    }
+
+                    let blurAmt = Math.max(0, (1 - textProgress) * 5); 
+                    ctx.filter = `blur(${blurAmt}px)`; ctx.globalAlpha = Math.min(1, textProgress * 1.5); 
+                    
+                    let textGrad = ctx.createLinearGradient(0, 10, 0, -20); 
+                    textGrad.addColorStop(0, 'rgba(212, 175, 55, 0)'); 
+                    textGrad.addColorStop(0.5, isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)'); 
+                    textGrad.addColorStop(1, isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'); 
+                    ctx.fillStyle = textGrad; 
+                    
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, 0, 0); 
+                    ctx.restore(); 
+                }
+            }
+            ctx.restore();
+        }
+
+        function render() {
+            carouselRotation += (targetRotation - carouselRotation) * 0.08; ctx.clearRect(0, 0, width, height);
+            
+            if (appPhase.startsWith('spirit_')) {
+                if (Math.random() > 0.8 && particles.length < 100) particles.push(new LightParticle(width/2, height/2 - 40));
+                
+                ctx.save();
+                ctx.globalCompositeOperation = isDarkMode ? 'screen' : 'source-over';
+                particles.forEach((p, index) => { p.update(appPhase); p.draw(ctx); if (p.life <= 0 || p.absorbed) particles.splice(index, 1); });
+                ctx.restore();
+
+                const cy = height/2 - 40;
+
+                if (appPhase === 'spirit_intro') {
+                    spiritScale += (2.0 - spiritScale) * 0.1; 
+                    drawGraphic(width/2, cy, spiritScale, false, 0, 0, null, false, true); 
+                } 
+                else if (appPhase === 'spirit_carousel') { 
+                    getRenderedCarouselCards(true).forEach(c => drawGraphic(c.x, c.y, c.scale, false, 1, 1, c.tarotData, false)); 
+                } 
+                else if (appPhase === 'spirit_revealing') { 
+                    spiritFlipProgress += 0.02; 
+                    let flip = Math.min(spiritFlipProgress * 2, 1);
+                    drawGraphic(width/2, cy, 2.0, false, flip, 1, mySpiritCard, false, flip < 0.5);
+                    if (spiritFlipProgress >= 0.5) appPhase = 'spirit_revealed';
+                }
+                else if (appPhase === 'spirit_revealed') { 
+                    drawGraphic(width/2, cy, 2.0, false, 1, 1, mySpiritCard, false); 
+                    ctx.fillStyle = 'var(--gold)'; ctx.font = `300 24px ${FONT_OCCULT}`; ctx.textAlign = 'center'; 
+                    ctx.fillText(mySpiritCard.name, width/2, cy + (CARD_HEIGHT * 2.0)/2 + 50); 
+                }
+                else if (appPhase === 'spirit_exit') {
+                    spiritScale -= 0.15;
+                    if (spiritScale > 0) {
+                        drawGraphic(width/2, cy, Math.max(0, spiritScale), false, mySpiritCard ? 1 : 0, 1, mySpiritCard, false, !mySpiritCard);
+                    } else {
+                        dom.p2a.classList.add('translate-y-full');
+                        dom.p1.style.opacity = '1'; 
+                        dom.p1.style.pointerEvents = 'auto'; 
+                        appPhase = 'idle'; 
+                        particles = [];
+                    }
+                }
+            } 
+            else if (appPhase !== 'idle') {
+                const isExpanded = appPhase !== 'drawing';
+                
+                currentActiveSpread.slots.forEach((s, i) => {
+                    const coords = getSlotCoords(i, isExpanded); 
+                    let isWaitingSlot = (appPhase === 'drawing' && i === spreadCards.length);
+                    drawGraphic(coords.x, coords.y, coords.scale, true, 0, 0, null, false, false, isWaitingSlot); 
+                    
+                    let textOpacity = 1;
+                    if (spreadCards[i]) {
+                        textOpacity = Math.max(0, 1 - spreadCards[i].flipProgress * 2);
+                    }
+                    if (appPhase === 'converging' || appPhase === 'finished') textOpacity = 0;
+
+                    if (textOpacity > 0) {
+                        ctx.save();
+                        ctx.fillStyle = isDarkMode ? `rgba(255,255,255,${0.6 * textOpacity})` : `rgba(0,0,0,${0.6 * textOpacity})`;
+                        ctx.font = `300 12px ${FONT_OCCULT}`;
+                        ctx.textAlign = 'center';
+                        ctx.fillText(s.name, coords.x, coords.y + (CARD_HEIGHT * coords.scale)/2 + 25);
+                        ctx.restore();
+                    }
+                });
+                
+                if (appPhase !== 'finished') {
+                    ctx.save(); 
+                    ctx.globalCompositeOperation = isDarkMode ? 'screen' : 'source-over'; 
+                    
+                    if (appPhase === 'converging' && coreEnergy > 0) {
+                        let targetRadius = Math.min(80, Math.max(10, coreEnergy)); coreRadius += (targetRadius - coreRadius) * 0.1; 
+                        if (coreRadius > 1) { let gradient = ctx.createRadialGradient(width/2, targetCoreY, 0, width/2, targetCoreY, coreRadius); gradient.addColorStop(0, isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(212, 175, 55, 0.8)'); gradient.addColorStop(0.3, 'rgba(212, 175, 55, 0.6)'); gradient.addColorStop(1, 'rgba(212, 175, 55, 0)'); ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(width/2, targetCoreY, coreRadius, 0, Math.PI*2); ctx.fill(); }
+                    }
+                    particles.forEach((p, index) => { p.update(appPhase); p.draw(ctx); if (p.life <= 0 || p.absorbed) particles.splice(index, 1); });
+                    ctx.restore();
+                }
+                
+                if (appPhase === 'drawing') getRenderedCarouselCards().forEach(c => drawGraphic(c.x, c.y, c.scale, false, 0));
+                
+                for (let i = movingCards.length - 1; i >= 0; i--) { let mc = movingCards[i]; mc.progress += 0.04; let t = Math.min(mc.progress, 1); let easeT = 1 - Math.pow(1 - t, 3); drawGraphic(mc.startX + (mc.targetX - mc.startX) * easeT, mc.startY + (mc.targetY - mc.startY) * easeT, mc.startScale + (mc.targetScale - mc.startScale) * easeT, false, 0); if (t === 1) movingCards.splice(i, 1); }
+                let allFlipped = spreadCards.length > 0;
+                
+                spreadCards.forEach((sc, i) => {
+                    const coords = getSlotCoords(i, isExpanded);
+                    if (sc.isFlipping) { sc.flipProgress += 0.035; if(sc.flipProgress >= 1) sc.isFlipping = false; }
+                    if (sc.flipProgress >= 0.5) { sc.textProgress += 0.015; if (sc.textProgress > 1) sc.textProgress = 1; if (appPhase === 'interacting' && Math.random() > 0.05) for(let k=0; k<3; k++) particles.push(new LightParticle(coords.x, coords.y)); }
+                    if (sc.flipProgress < 1) allFlipped = false;
+                    if (!movingCards.some(mc => mc.id === sc.id)) drawGraphic(coords.x, coords.y, coords.scale, false, sc.flipProgress, sc.textProgress, sc.tarotData, sc.isReversed);
+                });
+                
+                if (appPhase === 'interacting' && allFlipped && !movingCards.length && !spreadCards.some(sc => sc.isFlipping)) { 
+                    appPhase = 'converging'; 
+                    convergeStartTime = Date.now(); 
+                    setTimeout(() => { 
+                        appPhase = 'finished'; 
+                        coreEnergy = 0; 
+                        coreRadius = 0; 
+                        particles = []; 
+                        dom.decodeModule.classList.replace('btn-hidden', 'btn-reveal'); 
+                    }, CONVERGE_DURATION); 
+                }
+            }
+            requestAnimationFrame(render);
+        }
+        render();
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "塔罗·时光",
+  "short_name": "塔罗时光",
+  "description": "你的二次元专属星象牌灵神谕",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0d0d0f",
+  "theme_color": "#d4af37",
+  "icons": [
+    {
+      "src": "./assets/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
