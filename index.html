@@ -289,7 +289,7 @@
         const imageCache = {};
         const fallbackImg = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80"; 
         
-        // 🌟 AI 自定义牌背加载逻辑
+        // 🌟 AI 自定义牌背加载逻辑 
         let backImgLoaded = false;
         const customBackImg = new Image();
         customBackImg.src = "./assets/cards/back.jpg"; // 确保放了图片
@@ -393,34 +393,71 @@
 
         dom.followUpInput.addEventListener('input', function() { this.style.height = '48px'; this.style.height = (this.scrollHeight) + 'px'; });
 
+        // 🌟 流式传输函数 🌟
         async function fetchAIResponse(promptText) {
             const loadingId = 'loading-' + Date.now();
             dom.chatContainer.innerHTML += `<div id="${loadingId}" class="mist-reveal flex space-x-2 mt-4 ml-2"><span class="w-2 h-2 rounded-full bg-[var(--gold)] animate-bounce"></span><span class="w-2 h-2 rounded-full bg-[var(--gold)] animate-bounce" style="animation-delay: 0.1s"></span><span class="w-2 h-2 rounded-full bg-[var(--gold)] animate-bounce" style="animation-delay: 0.2s"></span></div>`;
             setTimeout(() => { dom.aiScrollView.scrollTop = dom.aiScrollView.scrollHeight; }, 100);
 
             try {
-                const response = await fetch(BACKEND_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: promptText }) });
-                const result = await response.json();
+                const response = await fetch(BACKEND_URL, { 
+                    method: "POST", 
+                    headers: { "Content-Type": "application/json" }, 
+                    body: JSON.stringify({ prompt: promptText, stream: true }) 
+                });
+                
                 document.getElementById(loadingId)?.remove();
+                if (!response.ok) throw new Error("API Connection Failed");
 
-                if (result.choices && result.choices[0].message) {
-                    const fullText = result.choices[0].message.content;
-                    currentAIContext = promptText + "\nAI回复：" + fullText + "\n";
-                    const aiBubble = document.createElement('div');
-                    aiBubble.className = "mist-reveal mt-4 p-5 chat-bubble-ai text-[15px] leading-loose font-light whitespace-pre-wrap tracking-wide text-justify font-occult self-start w-full md:max-w-[90%]";
-                    aiBubble.innerText = fullText;
-                    dom.chatContainer.appendChild(aiBubble);
-                    setTimeout(() => { dom.aiScrollView.scrollTop = dom.aiScrollView.scrollHeight; }, 100);
-                } else {
-                    dom.chatContainer.innerHTML += `<div class="mist-reveal mt-4 text-red-400 text-sm text-center">系统开了小差，能量被狗吃了。</div>`;
+                const aiBubble = document.createElement('div');
+                aiBubble.className = "mist-reveal mt-4 p-5 chat-bubble-ai text-[15px] leading-loose font-light whitespace-pre-wrap tracking-wide text-justify font-occult self-start w-full md:max-w-[90%]";
+                dom.chatContainer.appendChild(aiBubble);
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let fullText = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        const trimmedLine = line.trim();
+                        if (!trimmedLine || trimmedLine === 'data: [DONE]') continue;
+                        
+                        if (trimmedLine.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(trimmedLine.slice(6));
+                                if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
+                                    fullText += data.choices[0].delta.content;
+                                    aiBubble.innerText = fullText;
+                                    dom.aiScrollView.scrollTop = dom.aiScrollView.scrollHeight;
+                                }
+                            } catch (e) {}
+                        } else if (trimmedLine.startsWith('{')) { // 兼容非流式
+                            try {
+                                const data = JSON.parse(trimmedLine);
+                                if (data.choices && data.choices[0].message) {
+                                    fullText = data.choices[0].message.content;
+                                    aiBubble.innerText = fullText;
+                                    dom.aiScrollView.scrollTop = dom.aiScrollView.scrollHeight;
+                                }
+                            } catch (e) {}
+                        }
+                    }
                 }
+                currentAIContext = promptText + "\nAI回复：" + fullText + "\n";
             } catch (error) {
                 document.getElementById(loadingId)?.remove();
-                dom.chatContainer.innerHTML += `<div class="mist-reveal mt-4 text-red-400 text-sm text-center">断网了？还是后端挂了？检查一下接口。</div>`;
+                dom.chatContainer.innerHTML += `<div class="mist-reveal mt-4 text-red-400 text-sm text-center">灵力中断：能量波长不匹配，或接口已进入睡眠状态。</div>`;
+                console.error(error);
             }
         }
 
-        // 发起抽牌后的初次神谕
+        // 🌟 抽牌初次神谕逻辑 (已脱敏) 🌟
         document.getElementById('decode-btn').onclick = () => {
             dom.p4b.classList.remove('pointer-events-none'); dom.p4b.classList.add('pointer-events-auto');
             dom.p4b.classList.remove('translate-y-full');
@@ -429,19 +466,15 @@
             const userQuestion = document.getElementById('user-question').value.trim();
             dom.chatContainer.innerHTML = ""; currentAIContext = ""; 
             
-            // 构建带彩蛋的强网感 + 牌灵身份 Prompt
             let prompt = "";
             if (mySpiritCard) {
-                prompt += `【人设最高指令：你是用户 Jerry 结契的专属牌灵“${mySpiritCard.name}”。请你必须以第一人称（比如本座、老娘、本大爷等，符合你牌面气质即可）自居！将“${mySpiritCard.name}”的塔罗牌核心特质，完美融入到极其毒辣、人间清醒、满腹网络热梗和抽象文化的暴躁老司机人设中。结合你的牌意特质，用最犀利、搞笑、一针见血的口吻给他解牌，该骂醒他就狠狠骂醒他！】\n`;
+                prompt += `【人设最高指令：你是与我结契的专属牌灵“${mySpiritCard.name}”。请以符合牌面气质的第一人称自居！你是一个嘴巴毒辣、人间清醒、懂超多互联网热梗的“满级损友”。把“${mySpiritCard.name}”的塔罗核心特质，完美融入到这种“暴躁但护短”的损友性格中。用犀利、搞笑、一针见血的口吻给我解牌。像好朋友一样无情嘲讽，也像家人一样真诚建议。禁止提及Jerry、武汉、高考、理工科开发等私人信息。】\n`;
             } else {
-                prompt += `【人设最高指令：你现在是一个嘴巴极其毒辣、人间清醒、满嘴网络热梗和抽象文化的塔罗解牌老司机。不要装神弄鬼，别整虚头巴脑的词汇。用最直率、犀利、搞笑、甚至带点阴阳怪气的口吻给用户 Jerry 解牌，狠狠戳穿他的幻想！】\n`;
+                prompt += `【人设最高指令：你现在是一个嘴巴极其毒辣、人间清醒、满嘴网络热梗的塔罗解牌老司机，也是我的“毒舌好基友”。不要装神弄鬼，用最直率、搞笑、阴阳怪气的口吻给我解牌，像最好的朋友那样戳穿我的幻想，把我骂醒！禁止提及Jerry、武汉、高考、理工科开发等私人信息。】\n`;
             }
             
-            prompt += `【特别背景彩蛋（可作为调侃素材）：用户名叫 Jerry，是个在武汉备战2026年高考的理科生(物化生卷王)，平时爱折腾单片机、画PCB和写前端。如果你觉得合适，必须偶尔用这些背景嘲讽或者调侃他几句，拉满节目效果。】\n\n`;
-            
             prompt += `【牌阵专属解法】：${currentActiveSpread.aiPrompt}\n\n`;
-            
-            prompt += `【当前情况】：用户意图或问题是：“${userQuestion ? userQuestion : '未发问，让他自求多福'}”\n【抽到的牌面内容】：\n`;
+            prompt += `【我的问题】：${userQuestion ? userQuestion : '没问具体问题，看牌面随便怼我吧'}\n【抽到的牌面内容】：\n`;
             spreadCards.forEach((c, index) => {
                 prompt += `- [位置：${currentActiveSpread.slots[index].name}]：${c.tarotData.name} (${c.isReversed ? '逆位' : '正位'})\n`;
             });
@@ -449,32 +482,26 @@
             if (userQuestion) {
                 const userBubble = document.createElement('div');
                 userBubble.className = "mt-4 p-4 chat-bubble-user text-[14px] leading-relaxed self-end max-w-[85%] font-occult";
-                userBubble.innerText = "Jerry: " + userQuestion;
+                userBubble.innerText = "我: " + userQuestion;
                 dom.chatContainer.appendChild(userBubble);
             }
             fetchAIResponse(prompt);
         };
 
-        // 处理对话流的追问
+        // 🌟 追问逻辑 (已脱敏) 🌟
         dom.followUpBtn.onclick = () => {
             const text = dom.followUpInput.value.trim(); if (!text) return;
             dom.followUpInput.value = ""; dom.followUpInput.style.height = '48px'; 
             const userBubble = document.createElement('div');
             userBubble.className = "mist-reveal mt-4 p-4 chat-bubble-user text-[14px] leading-relaxed self-end max-w-[85%] font-occult";
-            userBubble.innerText = "Jerry: " + text;
+            userBubble.innerText = "我: " + text;
             dom.chatContainer.appendChild(userBubble);
             setTimeout(() => { dom.aiScrollView.scrollTop = dom.aiScrollView.scrollHeight; }, 50);
             
-            // 构建带有历史语境和牌灵身份提醒的追问 Prompt
-            let followUpPrompt = "";
-            if (mySpiritCard) {
-                followUpPrompt = currentAIContext + `\n用户(Jerry)追问：“${text}”\n【系统提醒：请继续保持你作为专属牌灵“${mySpiritCard.name}”的身份，结合你的牌面特质】用同样毒舌、暴躁、懂互联网抽象文化的口吻直接怼回去或者回答他：`;
-            } else {
-                followUpPrompt = currentAIContext + `\n用户(Jerry)追问：“${text}”\n请结合上面的语境，用同样毒舌、搞笑、懂互联网抽象文化的口吻直接怼回去或者回答他：`;
-            }
-            
+            let followUpPrompt = currentAIContext + `\n我继续追问：“${text}”\n【系统提醒：请继续保持你作为专属牌灵（如有）和“毒舌损友”的身份，结合牌面特质用同样暴躁、懂梗、好玩的口吻直接怼回去或回答我。禁止提及Jerry、武汉、高考等私人信息。】`;
             fetchAIResponse(followUpPrompt);
         };
+
         dom.followUpInput.addEventListener("keypress", function(event) { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); dom.followUpBtn.click(); } });
         document.getElementById('back-from-4b').onclick = () => location.reload(); 
 
@@ -599,19 +626,15 @@
                 }
             } 
             else if (flipScale >= 0) { 
-                // 🌟 AI 牌背渲染逻辑 
                 if (backImgLoaded && !isPlaceholder) {
                     ctx.save();
                     ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8); ctx.clip(); 
                     const zoom = 1.02; const dw = w * zoom, dh = h * zoom;
                     ctx.drawImage(customBackImg, -dw/2, -dh/2, dw, dh);
                     ctx.restore();
-                    
-                    // 统一画金边
                     ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8);
                     ctx.strokeStyle = isDark ? '#d4af37' : '#b89324'; ctx.lineWidth = 1.5; ctx.stroke();
                 } else {
-                    // 默认几何兜底逻辑
                     const grad = ctx.createLinearGradient(-w/2, -h/2, w/2, h/2); grad.addColorStop(0, isDark ? '#1c1c24' : '#ffffff'); grad.addColorStop(1, isDark ? '#0a0a0c' : '#f0f0f0'); ctx.fillStyle = grad; ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8); ctx.fill(); 
                     ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8); ctx.strokeStyle = isDark ? '#d4af37' : '#b89324'; ctx.lineWidth = 1.5; ctx.stroke(); 
                     if(hideBackDecor) { ctx.fillStyle = isDark ? '#d4af37' : '#b89324'; ctx.font = `lighter ${Math.floor(CARD_WIDTH * 0.8)}px 'Didot', serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('O', 0, 0); } 
