@@ -11,54 +11,94 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="塔罗时光">
     <meta name="theme-color" content="#0d0d0f" media="(prefers-color-scheme: dark)">
-    <meta name="theme-color" content="#f4f4f6" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#e8e8ed" media="(prefers-color-scheme: light)">
     
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./assets/app-icon.png?v=13">
 
-    <!-- 引入高端中文字体栈 -->
+    <!-- 引入高端中文字体栈 (思源宋体) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400&display=swap" rel="stylesheet">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* 核心调色板与全局变量 */
         :root { 
-            --gold: #d4af37; 
             --font-occult: 'Didot', 'Bodoni MT', 'Noto Serif SC', 'Songti SC', serif;
             --font-sans: system-ui, -apple-system, sans-serif;
         }
+        
+        /* 🔥 高级黑模式：带有景深和呼吸感的工业黑 */
         .dark { 
-            --bg: #0d0d0f; --text: #e0e0e0; --card-bg: #1a1a1c; 
-            --particle-base: #ffffff; --particle-gold: #d4af37;
+            --gold: #d4af37; /* 亮金色 */
+            --bg-center: #1a1a20; /* 聚光灯中心的微暖深灰 */
+            --bg-edge: #050507;   /* 边缘的极暗色 */
+            --text: #e8e8e8;
+            --card-bg: #141417; 
+            --particle-base: #ffffff; 
+            --glass-bg: linear-gradient(135deg, rgba(26, 26, 30, 0.6) 0%, rgba(10, 10, 12, 0.8) 100%);
+            --glass-border: rgba(212, 175, 55, 0.15);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --overlay: rgba(5, 5, 7, 0.85); /* 聊天背景罩层 */
+            --input-bg: rgba(0, 0, 0, 0.4);
+            --btn-oracle-bg: linear-gradient(to bottom, #1a1a1c, #000000);
+            --btn-oracle-border: rgba(212, 175, 55, 0.6);
+            --btn-oracle-text: var(--gold);
+            --bubble-ai-bg: rgba(255, 255, 255, 0.05);
+            --bubble-ai-border: rgba(255, 255, 255, 0.1);
+            --bubble-user-bg: rgba(212, 175, 55, 0.15);
         }
+        
+        /* ☀️ 白昼模式：柔和高对比，修复金字发白不可读的问题 */
         .light { 
-            --bg: #f4f4f6; --text: #2c2c2c; --card-bg: #ffffff; 
-            --particle-base: #6b6b6b; --particle-gold: #b89324;
+            --gold: #b89324; /* 调低亮度的复古金，保证白色背景下的可读性 */
+            --bg-center: #ffffff; 
+            --bg-edge: #e8e8ed;
+            --text: #2c2c2c; 
+            --card-bg: #ffffff; 
+            --particle-base: #6b6b6b; 
+            --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(240, 240, 245, 0.8) 100%);
+            --glass-border: rgba(212, 175, 55, 0.35);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            --overlay: rgba(255, 255, 255, 0.85);
+            --input-bg: rgba(255, 255, 255, 0.6);
+            --btn-oracle-bg: linear-gradient(to bottom, #ffffff, #f0f0f5);
+            --btn-oracle-border: rgba(184, 147, 36, 0.5);
+            --btn-oracle-text: var(--gold);
+            --bubble-ai-bg: rgba(0, 0, 0, 0.03);
+            --bubble-ai-border: rgba(0, 0, 0, 0.08);
+            --bubble-user-bg: rgba(212, 175, 55, 0.15);
         }
+
         body {
-            background-color: var(--bg); color: var(--text);
+            background: radial-gradient(circle at 50% 40%, var(--bg-center) 0%, var(--bg-edge) 100%);
+            background-color: var(--bg-edge); /* 兜底 */
+            color: var(--text);
             font-family: var(--font-sans);
-            transition: background-color 0.4s ease, color 0.4s ease;
+            transition: background 0.5s ease, background-color 0.5s ease, color 0.5s ease;
             user-select: none; -webkit-tap-highlight-color: transparent;
             overflow: hidden; touch-action: none; 
         }
         
-        h1, h2, h3, .font-occult, #ai-text-container {
+        h1, h2, h3, .font-occult, #chat-container {
             font-family: var(--font-occult) !important;
             font-weight: 300;
         }
 
+        /* 升级后的动态毛玻璃 */
         .frosted {
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(212, 175, 55, 0.15); background: rgba(20, 20, 22, 0.65);
-            transition: background 0.4s ease, border-color 0.4s ease;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
         }
-        .light .frosted { background: rgba(255, 255, 255, 0.75); border-color: rgba(212, 175, 55, 0.35); }
         
         canvas { position: absolute; top: 0; left: 0; z-index: 5; width: 100vw; height: 100vh; pointer-events: auto; }
         .layer-10 { z-index: 10; } .layer-20 { z-index: 20; } .layer-40 { z-index: 40; }
         
+        /* 彻底移除滑条 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
@@ -68,29 +108,42 @@
             transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease-out;
         }
         
+        /* 自适应主题的神谕按钮 */
+        .btn-oracle {
+            background: var(--btn-oracle-bg);
+            border: 1px solid var(--btn-oracle-border);
+            color: var(--btn-oracle-text);
+            transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease, transform 0.1s;
+        }
+        
         .mist-reveal {
             opacity: 0;
-            animation: mistFade 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            animation: mistFade 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
             will-change: filter, opacity, transform;
         }
         @keyframes mistFade {
             0% { filter: blur(10px); opacity: 0; transform: translateY(8px); }
-            99% { filter: blur(0px); opacity: 1; transform: translateY(0); }
             100% { filter: none; opacity: 1; transform: translateY(0); }
-        }
-
-        /* 🌟 为首页的箭头定制水平横向跳动动画 */
-        @keyframes pointLeft {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(-6px); }
-        }
-        .animate-point-left {
-            display: inline-block;
-            animation: pointLeft 1.5s ease-in-out infinite;
         }
 
         .safe-top-nav {
             top: max(2rem, env(safe-area-inset-top));
+        }
+        
+        /* 聊天气泡自适应 */
+        .chat-bubble-user {
+            background: var(--bubble-user-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--gold);
+            border-radius: 18px 18px 4px 18px;
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+        .chat-bubble-ai {
+            background: var(--bubble-ai-bg);
+            border: 1px solid var(--bubble-ai-border);
+            color: var(--text);
+            border-radius: 18px 18px 18px 4px;
+            transition: background 0.4s ease, border-color 0.4s ease;
         }
     </style>
 </head>
@@ -106,7 +159,7 @@
             </button>
             
             <div id="profile-btn" class="w-12 h-12 rounded-full frosted flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.3)] active:scale-95 transition-transform cursor-pointer pointer-events-auto">
-                <svg class="w-6 h-6 text-[var(--gold)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                <svg class="w-6 h-6 text-[var(--gold)] transition-colors duration-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
                     <circle cx="12" cy="12" r="8"></circle>
                     <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93"></path>
                 </svg>
@@ -114,66 +167,277 @@
         </div>
 
         <div id="start-drawing-area" class="w-64 h-80 rounded-2xl flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform mt-10">
-            <h1 class="text-4xl tracking-[0.2em] mb-2 text-[var(--gold)] font-occult" id="preview-spread-name">每日指引</h1>
+            <h1 class="text-4xl tracking-[0.2em] mb-2 text-[var(--gold)] font-occult transition-colors duration-400" id="preview-spread-name">每日指引</h1>
             <p class="text-[13px] opacity-60 tracking-widest mb-10 font-occult">点击中心唤醒牌阵</p>
-            <div class="w-14 h-14 rounded-full border border-[var(--gold)] flex items-center justify-center animate-pulse shadow-[0_0_20px_rgba(212,175,55,0.2)]">
-                <span class="text-[var(--gold)] text-xl font-light leading-none">✧</span>
+            <div class="w-14 h-14 rounded-full border border-[var(--gold)] flex items-center justify-center animate-pulse shadow-[0_0_20px_rgba(212,175,55,0.2)] transition-colors duration-400">
+                <span class="text-[var(--gold)] text-xl font-light leading-none transition-colors duration-400">✧</span>
             </div>
         </div>
-        
-        <!-- 🌟 重新设计的超强视觉焦点提示：字号微大、呼吸闪烁、水平箭头动态指引，且文案返璞归真 -->
-        <div class="absolute bottom-12 flex items-center text-[12px] text-[var(--gold)] opacity-70 tracking-[0.2em] font-occult animate-pulse">
-            <span class="animate-point-left mr-1 font-sans">←</span>
-            <span>向左滑动浏览牌阵</span>
-        </div>
+        <p class="absolute bottom-12 text-[10px] opacity-40 tracking-[0.3em] animate-bounce font-occult">向左滑动浏览星轨</p>
     </div>
 
     <!-- 解牌模块 -->
     <div id="decode-module" class="fixed bottom-10 left-[50%] layer-10 flex flex-col items-center btn-hidden w-[90%] max-w-sm">
-        <input type="text" id="user-question" placeholder="心中所惑，皆可发问" class="w-full mb-4 px-6 py-4 rounded-2xl frosted border border-[var(--gold)]/30 focus:border-[var(--gold)] text-center text-sm font-occult outline-none transition-all placeholder:text-[var(--text)] placeholder:opacity-30 shadow-lg">
-        <button id="decode-btn" class="bg-gradient-to-b from-[var(--card-bg)] to-black border border-[var(--gold)]/60 text-[var(--gold)] px-14 py-3.5 rounded-full text-sm font-bold tracking-[0.2em] cursor-pointer whitespace-nowrap shadow-[0_0_25px_rgba(212,175,55,0.25)] active:scale-95 transition-transform font-occult">
+        <input type="text" id="user-question" placeholder="心中所惑，皆可发问" class="w-full mb-4 px-6 py-4 rounded-2xl frosted border border-[var(--gold)]/30 focus:border-[var(--gold)] text-center text-sm font-occult outline-none transition-all placeholder:text-[var(--text)] placeholder:opacity-30 shadow-lg bg-transparent text-[var(--text)]">
+        <button id="decode-btn" class="btn-oracle px-14 py-3.5 rounded-full text-sm font-bold tracking-[0.2em] cursor-pointer whitespace-nowrap shadow-[0_0_25px_rgba(212,175,55,0.25)] active:scale-95 transition-transform font-occult">
             ✧ 唤醒神谕 ✧
         </button>
-        <!-- 🌟 文案去比喻化：“星盘”还原为“牌阵” -->
         <button id="skip-btn" class="mt-5 text-[11px] text-[var(--gold)] opacity-50 tracking-[0.2em] font-occult cursor-pointer active:scale-95 transition-transform">
-            ← 收起牌阵，返回大厅
+            ← 收起星盘，返回大厅
         </button>
     </div>
 
     <!-- 牌阵选择库 -->
-    <div id="page-2c" class="fixed inset-0 bg-[var(--bg)] translate-x-full transition-transform duration-500 layer-20 p-6 flex flex-col pointer-events-auto">
+    <div id="page-2c" class="fixed inset-0 translate-x-full transition-transform duration-500 layer-20 p-6 flex flex-col pointer-events-auto" style="background: radial-gradient(circle at 50% 40%, var(--bg-center) 0%, var(--bg-edge) 100%);">
         <div class="absolute left-6 z-50 pointer-events-auto safe-top-nav">
-            <button id="back-from-2c" class="text-[var(--gold)] text-lg tracking-widest cursor-pointer font-occult flex items-center h-12 leading-none p-2 -ml-2">← 归还</button>
+            <button id="back-from-2c" class="text-[var(--gold)] text-lg tracking-widest cursor-pointer font-occult flex items-center h-12 leading-none p-2 -ml-2 transition-colors duration-400">← 归还</button>
         </div>
-        <!-- 🌟 文案去比喻化：“星轨图鉴”还原为“牌阵图鉴” -->
-        <h2 class="text-3xl tracking-[0.1em] mb-8 text-[var(--gold)] mt-20 font-occult">牌阵图鉴</h2>
+        <h2 class="text-3xl tracking-[0.1em] mb-8 text-[var(--gold)] mt-20 font-occult transition-colors duration-400">星轨图鉴</h2>
         <div class="flex-1 overflow-y-auto space-y-4 pb-10 no-scrollbar" id="spread-list"></div>
     </div>
 
     <!-- 我的牌灵界面 -->
     <div id="page-2a" class="fixed inset-0 translate-y-full transition-transform duration-500 layer-20 flex flex-col pointer-events-none opacity-0">
         <div class="absolute left-6 z-50 pointer-events-auto safe-top-nav">
-            <button id="back-from-2a" class="text-[var(--gold)] text-lg tracking-widest cursor-pointer font-occult flex items-center h-12 leading-none p-2 -ml-2">← 大厅</button>
+            <button id="back-from-2a" class="text-[var(--gold)] text-lg tracking-widest cursor-pointer font-occult flex items-center h-12 leading-none p-2 -ml-2 transition-colors duration-400">← 大厅</button>
         </div>
         <div id="spirit-ui-text" class="absolute bottom-24 left-0 right-0 text-center pointer-events-none transition-opacity duration-500">
-            <p class="text-[var(--gold)] text-2xl tracking-[0.3em] mb-3 font-occult">灵境羁绊</p>
+            <p class="text-[var(--gold)] text-2xl tracking-[0.3em] mb-3 font-occult transition-colors duration-400">灵境羁没问题，这是融合了**高级黑自适应UI**、**牌背自定义图片渲染**、**移动端防误触修复**、**多轮追问聊天机制**，以及**“专属牌灵+毒舌卷王专属网感”人设提示词**的**全量前端代码**。
+
+你只需要把之前生成的那张牌背图片（文件名为 watermarked_img_5956946102853923573.png）重命名为 `back.jpg`，并放进 `./assets/cards/` 目录下，直接覆盖 `index.html` 就可以完美运行了！
+
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>塔罗·时光</title>
+    
+    <!-- PWA WebApp 沉浸式声明 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="塔罗时光">
+    <meta name="theme-color" content="#0d0d0f" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#e8e8ed" media="(prefers-color-scheme: light)">
+    
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./assets/app-icon.png?v=13">
+
+    <!-- 引入高端中文字体栈 (思源宋体) -->
+    <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
+    <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
+    <link href="[https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400&display=swap](https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400&display=swap)" rel="stylesheet">
+    
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <style>
+        /* 核心调色板与全局变量 */
+        :root { 
+            --font-occult: 'Didot', 'Bodoni MT', 'Noto Serif SC', 'Songti SC', serif;
+            --font-sans: system-ui, -apple-system, sans-serif;
+        }
+        
+        /* 🔥 高级黑模式：带有景深和呼吸感的工业黑 */
+        .dark { 
+            --gold: #d4af37; /* 亮金色 */
+            --bg-center: #1a1a20; /* 聚光灯中心的微暖深灰 */
+            --bg-edge: #050507;   /* 边缘的极暗色 */
+            --text: #e8e8e8;
+            --card-bg: #141417; 
+            --particle-base: #ffffff; 
+            --glass-bg: linear-gradient(135deg, rgba(26, 26, 30, 0.6) 0%, rgba(10, 10, 12, 0.8) 100%);
+            --glass-border: rgba(212, 175, 55, 0.15);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --overlay: rgba(5, 5, 7, 0.85); /* 聊天背景罩层 */
+            --input-bg: rgba(0, 0, 0, 0.4);
+            --btn-oracle-bg: linear-gradient(to bottom, #1a1a1c, #000000);
+            --btn-oracle-border: rgba(212, 175, 55, 0.6);
+            --btn-oracle-text: var(--gold);
+            --bubble-ai-bg: rgba(255, 255, 255, 0.05);
+            --bubble-ai-border: rgba(255, 255, 255, 0.1);
+            --bubble-user-bg: rgba(212, 175, 55, 0.15);
+        }
+        
+        /* ☀️ 白昼模式：柔和高对比，修复金字发白不可读的问题 */
+        .light { 
+            --gold: #b89324; /* 调低亮度的复古金，保证白色背景下的可读性 */
+            --bg-center: #ffffff; 
+            --bg-edge: #e8e8ed;
+            --text: #2c2c2c; 
+            --card-bg: #ffffff; 
+            --particle-base: #6b6b6b; 
+            --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(240, 240, 245, 0.8) 100%);
+            --glass-border: rgba(212, 175, 55, 0.35);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            --overlay: rgba(255, 255, 255, 0.85);
+            --input-bg: rgba(255, 255, 255, 0.6);
+            --btn-oracle-bg: linear-gradient(to bottom, #ffffff, #f0f0f5);
+            --btn-oracle-border: rgba(184, 147, 36, 0.5);
+            --btn-oracle-text: var(--gold);
+            --bubble-ai-bg: rgba(0, 0, 0, 0.03);
+            --bubble-ai-border: rgba(0, 0, 0, 0.08);
+            --bubble-user-bg: rgba(212, 175, 55, 0.15);
+        }
+
+        body {
+            background: radial-gradient(circle at 50% 40%, var(--bg-center) 0%, var(--bg-edge) 100%);
+            background-color: var(--bg-edge); /* 兜底 */
+            color: var(--text);
+            font-family: var(--font-sans);
+            transition: background 0.5s ease, background-color 0.5s ease, color 0.5s ease;
+            user-select: none; -webkit-tap-highlight-color: transparent;
+            overflow: hidden; touch-action: none; 
+        }
+        
+        h1, h2, h3, .font-occult, #chat-container {
+            font-family: var(--font-occult) !important;
+            font-weight: 300;
+        }
+
+        /* 升级后的动态毛玻璃 */
+        .frosted {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+        
+        canvas { position: absolute; top: 0; left: 0; z-index: 5; width: 100vw; height: 100vh; pointer-events: auto; }
+        .layer-10 { z-index: 10; } .layer-20 { z-index: 20; } .layer-40 { z-index: 40; }
+        
+        /* 彻底移除滑条 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .btn-hidden { transform: translate(-50%, 20px) scale(0.9); opacity: 0; pointer-events: none; }
+        .btn-reveal {
+            transform: translate(-50%, 0) scale(1); opacity: 1; pointer-events: auto;
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease-out;
+        }
+        
+        /* 自适应主题的神谕按钮 */
+        .btn-oracle {
+            background: var(--btn-oracle-bg);
+            border: 1px solid var(--btn-oracle-border);
+            color: var(--btn-oracle-text);
+            transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease, transform 0.1s;
+        }
+        
+        .mist-reveal {
+            opacity: 0;
+            animation: mistFade 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            will-change: filter, opacity, transform;
+        }
+        @keyframes mistFade {
+            0% { filter: blur(10px); opacity: 0; transform: translateY(8px); }
+            100% { filter: none; opacity: 1; transform: translateY(0); }
+        }
+
+        .safe-top-nav {
+            top: max(2rem, env(safe-area-inset-top));
+        }
+        
+        /* 聊天气泡自适应 */
+        .chat-bubble-user {
+            background: var(--bubble-user-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--gold);
+            border-radius: 18px 18px 4px 18px;
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+        .chat-bubble-ai {
+            background: var(--bubble-ai-bg);
+            border: 1px solid var(--bubble-ai-border);
+            color: var(--text);
+            border-radius: 18px 18px 18px 4px;
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+    </style>
+</head>
+<body class="dark h-screen w-screen relative">
+
+    <canvas id="tarotCanvas"></canvas>
+
+    <!-- 首页容器 -->
+    <div id="page-1" class="absolute inset-0 layer-10 flex flex-col items-center justify-center pointer-events-auto transition-opacity duration-500">
+        <div class="absolute left-6 right-6 flex justify-between items-start pointer-events-none safe-top-nav" id="top-nav">
+            <button id="theme-toggle" class="w-12 h-12 rounded-full frosted shadow-[0_0_15px_rgba(212,175,55,0.2)] active:scale-95 transition-transform pointer-events-auto flex items-center justify-center">
+                <span id="theme-icon" class="text-xl leading-none">🌙</span>
+            </button>
+            
+            <div id="profile-btn" class="w-12 h-12 rounded-full frosted flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.3)] active:scale-95 transition-transform cursor-pointer pointer-events-auto">
+                <svg class="w-6 h-6 text-[var(--gold)] transition-colors duration-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                    <circle cx="12" cy="12" r="8"></circle>
+                    <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93"></path>
+                </svg>
+            </div>
+        </div>
+
+        <div id="start-drawing-area" class="w-64 h-80 rounded-2xl flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform mt-10">
+            <h1 class="text-4xl tracking-[0.2em] mb-2 text-[var(--gold)] font-occult transition-colors duration-400" id="preview-spread-name">每日指引</h1>
+            <p class="text-[13px] opacity-60 tracking-widest mb-10 font-occult">点击中心唤醒牌阵</p>
+            <div class="w-14 h-14 rounded-full border border-[var(--gold)] flex items-center justify-center animate-pulse shadow-[0_0_20px_rgba(212,175,55,0.2)] transition-colors duration-400">
+                <span class="text-[var(--gold)] text-xl font-light leading-none transition-colors duration-400">✧</span>
+            </div>
+        </div>
+        <p class="absolute bottom-12 text-[10px] opacity-40 tracking-[0.3em] animate-bounce font-occult">向左滑动浏览星轨</p>
+    </div>
+
+    <!-- 解牌模块 -->
+    <div id="decode-module" class="fixed bottom-10 left-[50%] layer-10 flex flex-col items-center btn-hidden w-[90%] max-w-sm">
+        <input type="text" id="user-question" placeholder="心中所惑，皆可发问" class="w-full mb-4 px-6 py-4 rounded-2xl frosted border border-[var(--gold)]/30 focus:border-[var(--gold)] text-center text-sm font-occult outline-none transition-all placeholder:text-[var(--text)] placeholder:opacity-30 shadow-lg bg-transparent text-[var(--text)]">
+        <button id="decode-btn" class="btn-oracle px-14 py-3.5 rounded-full text-sm font-bold tracking-[0.2em] cursor-pointer whitespace-nowrap shadow-[0_0_25px_rgba(212,175,55,0.25)] active:scale-95 transition-transform font-occult">
+            ✧ 唤醒神谕 ✧
+        </button>
+        <button id="skip-btn" class="mt-5 text-[11px] text-[var(--gold)] opacity-50 tracking-[0.2em] font-occult cursor-pointer active:scale-95 transition-transform">
+            ← 收起星盘，返回大厅
+        </button>
+    </div>
+
+    <!-- 牌阵选择库 -->
+    <div id="page-2c" class="fixed inset-0 translate-x-full transition-transform duration-500 layer-20 p-6 flex flex-col pointer-events-auto" style="background: radial-gradient(circle at 50% 40%, var(--bg-center) 0%, var(--bg-edge) 100%);">
+        <div class="absolute left-6 z-50 pointer-events-auto safe-top-nav">
+            <button id="back-from-2c" class="text-[var(--gold)] text-lg tracking-widest cursor-pointer font-occult flex items-center h-12 leading-none p-2 -ml-2 transition-colors duration-400">← 归还</button>
+        </div>
+        <h2 class="text-3xl tracking-[0.1em] mb-8 text-[var(--gold)] mt-20 font-occult transition-colors duration-400">星轨图鉴</h2>
+        <div class="flex-1 overflow-y-auto space-y-4 pb-10 no-scrollbar" id="spread-list"></div>
+    </div>
+
+    <!-- 我的牌灵界面 -->
+    <div id="page-2a" class="fixed inset-0 translate-y-full transition-transform duration-500 layer-20 flex flex-col pointer-events-none opacity-0">
+        <div class="absolute left-6 z-50 pointer-events-auto safe-top-nav">
+            <button id="back-from-2a" class="text-[var(--gold)] text-lg tracking-widest cursor-pointer font-occult flex items-center h-12 leading-none p-2 -ml-2 transition-colors duration-400">← 大厅</button>
+        </div>
+        <div id="spirit-ui-text" class="absolute bottom-24 left-0 right-0 text-center pointer-events-none transition-opacity duration-500">
+            <p class="text-[var(--gold)] text-2xl tracking-[0.3em] mb-3 font-occult transition-colors duration-400">灵境羁绊</p>
             <p class="text-xs opacity-50 tracking-[0.1em] font-occult" id="spirit-subtitle">点击中心唤醒未知，或向左滑动自选</p>
         </div>
     </div>
 
-    <!-- AI 解牌结果页 -->
-    <div id="page-4b" class="fixed inset-0 bg-black/80 backdrop-blur-md translate-y-full transition-transform duration-700 layer-40 p-5 flex flex-col justify-center pointer-events-auto">
+    <!-- AI 解牌结果页 (加入自适应蒙版 + 防事件穿透保护) -->
+    <div id="page-4b" class="fixed inset-0 translate-y-full transition-transform duration-700 layer-40 flex flex-col pointer-events-none" style="background: var(--overlay); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); transition: background 0.4s ease, transform 0.7s;">
         <div class="absolute left-6 z-50 pointer-events-auto safe-top-nav">
-            <button id="back-from-4b" class="text-[var(--gold)] text-lg tracking-widest cursor-pointer font-occult flex items-center h-12 leading-none p-2 -ml-2">← 闭卷</button>
+            <button id="back-from-4b" class="text-[var(--gold)] text-lg tracking-widest cursor-pointer font-occult flex items-center h-12 leading-none p-2 -ml-2 transition-colors duration-400">← 闭卷</button>
         </div>
-        <div class="w-full max-h-[80vh] mt-12 rounded-3xl frosted p-6 md:p-8 overflow-y-auto relative flex flex-col shadow-2xl border border-[var(--gold)]/30 no-scrollbar" id="ai-scroll-view">
-            <h3 class="text-[var(--gold)] text-sm tracking-[0.2em] mb-6 border-b border-[var(--gold)]/20 pb-4 shrink-0 text-center font-occult">命运密语 · 神谕</h3>
-            <div id="ai-text-container" class="text-[15px] opacity-90 leading-loose font-light whitespace-pre-wrap flex-1 pb-8 tracking-wide text-justify font-occult"></div>
+        
+        <!-- 滚动对话区域 -->
+        <div class="w-full flex-1 mt-[80px] mb-[90px] px-5 overflow-y-auto relative flex flex-col no-scrollbar" id="ai-scroll-view">
+            <div class="w-full max-w-lg mx-auto flex flex-col pt-4 pb-8" id="chat-container"></div>
+        </div>
+
+        <!-- 底部输入框区域 -->
+        <div class="absolute bottom-6 left-0 right-0 px-5 pointer-events-auto flex justify-center pb-[env(safe-area-inset-bottom)]">
+            <div class="w-full max-w-lg flex space-x-3 items-end">
+                <textarea id="follow-up-input" placeholder="不服？继续怼..." class="flex-1 px-5 py-3.5 rounded-2xl frosted border border-[var(--gold)]/30 focus:border-[var(--gold)]/80 text-sm font-occult outline-none text-[var(--text)] placeholder:text-[var(--text)] placeholder:opacity-30 shadow-lg resize-none no-scrollbar bg-[var(--input-bg)]" rows="1" style="min-height: 48px; max-height: 120px; transition: background 0.4s ease;"></textarea>
+                <button id="send-follow-up-btn" class="bg-[var(--gold)] text-black px-6 py-3.5 rounded-2xl text-sm font-bold cursor-pointer shadow-[0_0_15px_rgba(212,175,55,0.4)] active:scale-95 transition-transform font-occult whitespace-nowrap h-[48px] shrink-0 transition-colors duration-400">发送</button>
+            </div>
         </div>
     </div>
 
     <script>
-        const BACKEND_URL = "https://uz8tmj4pw4.sealoshzh.site/TARRT";
+        const BACKEND_URL = "/api/tarrt"; 
         const FONT_OCCULT = "'Didot', 'Bodoni MT', 'Noto Serif SC', 'Songti SC', serif";
 
         const RAW_TAROT_DATA = [
@@ -221,14 +485,25 @@
             return { id: index, num: numLabel, name: cnName, imgUrl: `./assets/cards/${card.img}` };
         });
 
+        // 牌灵存储保护
         let mySpiritCard = null;
-        const savedSpiritId = localStorage.getItem('tarot_spirit_id');
-        if (savedSpiritId !== null) {
-            mySpiritCard = TAROT_DICT.find(c => c.id === parseInt(savedSpiritId)) || null;
-        }
+        try {
+            const savedSpiritId = localStorage.getItem('tarot_spirit_id');
+            if (savedSpiritId !== null) {
+                mySpiritCard = TAROT_DICT.find(c => c.id === parseInt(savedSpiritId)) || null;
+            }
+        } catch(e) { console.warn("Storage access restricted."); }
 
+        // ================= 加载图片资源 =================
         const imageCache = {};
-        const fallbackImg = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80"; 
+        const fallbackImg = "[https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80](https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80)"; 
+        
+        // 🌟 AI 自定义牌背加载逻辑
+        let backImgLoaded = false;
+        const customBackImg = new Image();
+        customBackImg.src = "./assets/cards/back.jpg"; // 确保放了图片
+        customBackImg.onload = () => { backImgLoaded = true; };
+
         function preloadTarotImages() {
             TAROT_DICT.forEach(card => {
                 const img = new Image(); img.src = card.imgUrl;
@@ -241,54 +516,21 @@
         }
         preloadTarotImages();
 
+        // 牌阵定义 
         const PREDEFINED_SPREADS = [
-            { 
-                id: 'daily_one', name: '每日指引', desc: '单张牌阵，每日高频使用，获取今日核心启示。', 
-                slots: [{ id: 0, x: 0, y: 0, name: '今日核心' }],
-                aiPrompt: "这是一个「单张牌阵」。请直接给出今天最核心的运势指引，简明扼要，直击灵魂。"
-            },
-            { 
-                id: 'body_mind_spirit', name: '身心灵', desc: '三张牌阵，探寻身体、头脑与灵魂的内在状态。', 
-                slots: [{ id: 0, x: -1.2, y: 0.5, name: '身体(外在)' }, { id: 1, x: 1.2, y: 0.5, name: '头脑(思维)' }, { id: 2, x: 0, y: -0.8, name: '灵魂(潜意识)' }],
-                aiPrompt: "这是一个「身心灵」牌阵。请分别解析用户的外在身体行动、内在逻辑思维、以及深层的灵魂潜意识，指出三者的协调或冲突之处。"
-            },
-            { 
-                id: 'time_flow', name: '时光之流', desc: '三张牌阵，洞察过去、现在与未来的因果轨迹。', 
-                slots: [{ id: 0, x: -1.2, y: 0, name: '过去之因' }, { id: 1, x: 0, y: 0, name: '当下之果' }, { id: 2, x: 1.2, y: 0, name: '未来之势' }],
-                aiPrompt: "这是一个「时光之流」牌阵。请按时间线推演：从过去的执念或因果，过渡到当下的真实境遇，最后精准预判未来的发展趋势。"
-            },
-            { 
-                id: 'relationship', name: '情感羁绊', desc: '四张牌阵，深度剖析两人之间的关系现状与未来走向。', 
-                slots: [{ id: 0, x: -1.2, y: 0, name: '本我状态' }, { id: 1, x: 1.2, y: 0, name: '对方视角' }, { id: 2, x: 0, y: -1.0, name: '关系核心' }, { id: 3, x: 0, y: 1.1, name: '未来演变' }],
-                aiPrompt: "这是一个「情感羁绊」牌阵。请先分析问卜者自身的感情状态，接着剖析对方的真实想法与视角，随后指出这段关系的核心症结或纽带，最后预测关系未来的演变趋势。"
-            },
-            { 
-                id: 'career_compass', name: '事业罗盘', desc: '四张牌阵，迷茫时为你指明职场破局之路。', 
-                slots: [{ id: 0, x: 0, y: -1.2, name: '当前局势' }, { id: 1, x: -1.2, y: 0, name: '潜在挑战' }, { id: 2, x: 1.2, y: 0, name: '突破机遇' }, { id: 3, x: 0, y: 1.2, name: '最终成就' }],
-                aiPrompt: "这是一个「事业罗盘」牌阵。请一针见血地指出用户当前的职场或学业局势，分析隐藏的挑战与阻碍，点明破局的机遇所在，最后描绘出顺势而为能达成的最终成就。"
-            },
-            { 
-                id: 'cross', name: '灵感十字', desc: '五张牌阵，全面解析问题的核心、阻碍、过去与未来。', 
-                slots: [{ id: 0, x: 0, y: 0, name: '核心现状' }, { id: 1, x: -1.2, y: 0, name: '内部阻碍' }, { id: 2, x: 1.2, y: 0, name: '外部助力' }, { id: 3, x: 0, y: -1.2, name: '过去成因' }, { id: 4, x: 0, y: 1.2, name: '最终结果' }],
-                aiPrompt: "这是一个「灵感十字」五张牌阵。请综合分析用户的核心现状，点明阻力与助力，追溯成因，并最终给出解决问题的终极指引。"
-            },
-            { 
-                id: 'two_choices', name: '二选一', desc: '五张牌阵，面临两条道路时，指引不同选择的走向。', 
-                slots: [{ id: 0, x: 0, y: 1.2, name: '当前处境' }, { id: 1, x: -1.3, y: 0.1, name: '选择A:现状' }, { id: 2, x: -1.3, y: -1.1, name: '选择A:结果' }, { id: 3, x: 1.3, y: 0.1, name: '选择B:现状' }, { id: 4, x: 1.3, y: -1.1, name: '选择B:结果' }],
-                aiPrompt: "这是一个「二选一」牌阵。请先分析用户的当前处境，然后严谨客观地对比【选择A】与【选择B】的现状及最终走向，最后给出高维视角的倾向性建议。"
-            },
-            {
-                id: 'hexagram', name: '六芒星神谕', desc: '七张牌阵，探寻宿命的深度因果与终极奥义。',
-                slots: [
-                    { id: 0, x: -1.0, y: -0.7, name: '过去(执念)' }, { id: 1, x: 1.0, y: -0.7, name: '现在(实相)' }, { id: 2, x: -1.0, y: 0.7, name: '未来(幻象)' }, 
-                    { id: 3, x: 1.0, y: 0.7, name: '环境(外缘)' }, { id: 4, x: 0, y: -1.4, name: '阻碍(业力)' }, { id: 5, x: 0, y: 1.4, name: '建议(解药)' }, { id: 6, x: 0, y: 0, name: '终极神谕' }
-                ],
-                aiPrompt: "这是一个最高阶的「六芒星神谕」七张牌阵。请进行深度灵性解读：串联过去执念、现在实相与未来幻象的时间轴；分析外部环境与内在业力(阻碍)的撕扯；给出化解困境的灵性解药；最终由位于中心的卡牌给出命运的终极神谕结论。请以大师的口吻，语言需极具穿透力。"
-            }
+            { id: 'daily_one', name: '每日指引', desc: '单张牌阵，每日高频使用，获取今日核心启示。', slots: [{ id: 0, x: 0, y: 0, name: '今日核心' }], aiPrompt: "直接给我今天最核心的运势，别长篇大论，用最犀利的吐槽或者干货砸醒我。" },
+            { id: 'body_mind_spirit', name: '身心灵', desc: '三张牌阵，探寻身体、头脑与灵魂的内在状态。', slots: [{ id: 0, x: -1.2, y: 0.5, name: '身体(外在)' }, { id: 1, x: 1.2, y: 0.5, name: '头脑(思维)' }, { id: 2, x: 0, y: -0.8, name: '灵魂(内心)' }], aiPrompt: "这是一个「身心灵」牌阵。别装深沉，直接点破我在外在行动、脑子里的瞎想、以及潜意识里到底在纠结什么拧巴的事儿。" },
+            { id: 'time_flow', name: '时光之流', desc: '三张牌阵，洞察过去、现在与未来的因果轨迹。', slots: [{ id: 0, x: -1.2, y: 0, name: '过去之因' }, { id: 1, x: 0, y: 0, name: '当下之果' }, { id: 2, x: 1.2, y: 0, name: '未来之势' }], aiPrompt: "这是一个「时光之流」牌阵。把过去我犯的蠢、现在吃的亏、还有未来可能掉的坑，连起来给我狠狠批一顿，顺便给个通透的建议。" },
+            { id: 'relationship', name: '情感羁绊', desc: '四张牌阵，深度剖析两人之间的关系现状与未来走向。', slots: [{ id: 0, x: -1.2, y: 0, name: '本我状态' }, { id: 1, x: 1.2, y: 0, name: '对方视角' }, { id: 2, x: 0, y: -1.0, name: '关系核心' }, { id: 3, x: 0, y: 1.1, name: '未来演变' }], aiPrompt: "这是一个「情感羁绊」牌阵。直接用看破红尘的语气，戳穿我在感情里的自欺欺人，看看对方到底咋想的，最后预判一下这破事儿的走向。" },
+            { id: 'career_compass', name: '事业罗盘', desc: '四张牌阵，迷茫时为你指明职场破局之路。', slots: [{ id: 0, x: 0, y: -1.2, name: '当前局势' }, { id: 1, x: -1.2, y: 0, name: '潜在挑战' }, { id: 2, x: 1.2, y: 0, name: '突破机遇' }, { id: 3, x: 0, y: 1.2, name: '最终成就' }], aiPrompt: "这是一个「事业罗盘」牌阵。直说我现在的处境有多尴尬，有什么坑在等我，破局的方法是什么。别灌鸡汤，我要最现实的建议。" },
+            { id: 'cross', name: '灵感十字', desc: '五张牌阵，全面解析问题的核心、阻碍、过去与未来。', slots: [{ id: 0, x: 0, y: 0, name: '核心现状' }, { id: 1, x: -1.2, y: 0, name: '内部阻碍' }, { id: 2, x: 1.2, y: 0, name: '外部助力' }, { id: 3, x: 0, y: -1.2, name: '过去成因' }, { id: 4, x: 0, y: 1.2, name: '最终结果' }], aiPrompt: "五张牌的「灵感十字」。综合现状、内外因素，用老司机的口吻告诉我问题的死穴在哪，最后给我指出一条明路。" },
+            { id: 'two_choices', name: '二选一', desc: '五张牌阵，面临两条道路时，指引不同选择的走向。', slots: [{ id: 0, x: 0, y: 1.2, name: '当前处境' }, { id: 1, x: -1.3, y: 0.1, name: '选择A:现状' }, { id: 2, x: -1.3, y: -1.1, name: '选择A:结果' }, { id: 3, x: 1.3, y: 0.1, name: '选择B:现状' }, { id: 4, x: 1.3, y: -1.1, name: '选择B:结果' }], aiPrompt: "「二选一」牌阵。别跟我扯什么都有可能，对比A和B的结果，用毒舌口吻明确告诉我选哪个没那么惨，或者哪个收益更高。" },
+            { id: 'hexagram', name: '六芒星神谕', desc: '七张牌阵，探寻宿命的深度因果与终极奥义。', slots: [{ id: 0, x: -1.0, y: -0.7, name: '过去(执念)' }, { id: 1, x: 1.0, y: -0.7, name: '现在(实相)' }, { id: 2, x: -1.0, y: 0.7, name: '未来(幻象)' }, { id: 3, x: 1.0, y: 0.7, name: '环境(外缘)' }, { id: 4, x: 0, y: -1.4, name: '阻碍(业力)' }, { id: 5, x: 0, y: 1.4, name: '建议(解药)' }, { id: 6, x: 0, y: 0, name: '终极神谕' }], aiPrompt: "最高阶的「六芒星神谕」。排场很大，但你要用极其犀利、看透人性的口吻，把我的过去现在未来、外界环境和内心执念扒得底朝天。最后一根针见血地抛出终极神谕结论。" }
         ];
         
         let currentActiveSpread = PREDEFINED_SPREADS[0]; 
         let lastDrawTime = 0; 
+        let currentAIContext = "";
 
         const dom = {
             themeBtn: document.getElementById('theme-toggle'), themeIcon: document.getElementById('theme-icon'),
@@ -296,7 +538,9 @@
             p2a: document.getElementById('page-2a'), p4b: document.getElementById('page-4b'), 
             decodeModule: document.getElementById('decode-module'),
             previewName: document.getElementById('preview-spread-name'), spreadList: document.getElementById('spread-list'),
-            spiritText: document.getElementById('spirit-ui-text'), spiritSub: document.getElementById('spirit-subtitle')
+            spiritText: document.getElementById('spirit-ui-text'), spiritSub: document.getElementById('spirit-subtitle'),
+            chatContainer: document.getElementById('chat-container'), aiScrollView: document.getElementById('ai-scroll-view'),
+            followUpInput: document.getElementById('follow-up-input'), followUpBtn: document.getElementById('send-follow-up-btn')
         };
 
         let isDarkMode = true;
@@ -310,7 +554,7 @@
 
         let globalDrag = false, globalStartX = 0;
         const startGlobalDrag = (e) => {
-            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('#profile-btn') || e.target.closest('#page-2c')) return;
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('#profile-btn') || e.target.closest('#page-2c') || e.target.closest('#ai-scroll-view') || e.target.closest('#start-drawing-area')) return;
             globalDrag = true; globalStartX = e.clientX || (e.touches && e.touches[0].clientX);
         };
         const endGlobalDrag = (e) => {
@@ -333,149 +577,146 @@
             dom.p1.style.opacity = '1';
             dom.p1.style.pointerEvents = 'auto';
             appPhase = 'idle';
-            spreadCards = []; 
-            movingCards = [];
-            particles = [];
-            coreEnergy = 0;
-            coreRadius = 0;
+            spreadCards = []; movingCards = []; particles = []; coreEnergy = 0; coreRadius = 0;
         };
         
-        let spiritScale = 0; 
-        let spiritFlipProgress = 0;
+        let spiritScale = 0; let spiritFlipProgress = 0;
 
         document.getElementById('profile-btn').onclick = () => {
-            dom.p1.style.opacity = '0';
-            dom.p1.style.pointerEvents = 'none';
-            dom.p2a.classList.remove('translate-y-full'); 
-            dom.p2a.style.opacity = '1'; 
-            dom.spiritText.style.opacity = '1'; 
-            
-            spiritScale = 0; 
-            spiritFlipProgress = 0;
-            
-            if (mySpiritCard) {
-                appPhase = 'spirit_revealed';
-                dom.spiritSub.innerText = "灵境已连结，向左滑动可重铸契约";
-            } else {
-                appPhase = 'spirit_intro'; 
-                dom.spiritSub.innerText = "点击中心唤醒未知，或向左滑动自选";
-            }
+            dom.p1.style.opacity = '0'; dom.p1.style.pointerEvents = 'none';
+            dom.p2a.classList.remove('translate-y-full'); dom.p2a.style.opacity = '1'; dom.spiritText.style.opacity = '1'; 
+            spiritScale = 0; spiritFlipProgress = 0;
+            if (mySpiritCard) { appPhase = 'spirit_revealed'; dom.spiritSub.innerText = "灵境已连结，向左滑动可重铸契约"; } 
+            else { appPhase = 'spirit_intro'; dom.spiritSub.innerText = "点击中心唤醒未知，或向左滑动自选"; }
         };
         
-        document.getElementById('back-from-2a').onclick = () => {
-            dom.p2a.style.opacity = '0';
-            appPhase = 'spirit_exit'; 
-        };
+        document.getElementById('back-from-2a').onclick = () => { dom.p2a.style.opacity = '0'; appPhase = 'spirit_exit'; };
 
         function renderSpreadList() {
-            dom.spreadList.innerHTML = PREDEFINED_SPREADS.map(spread => `<div class="frosted p-5 rounded-2xl cursor-pointer active:scale-95 transition-transform border border-transparent ${currentActiveSpread.id === spread.id ? '!border-[var(--gold)]' : ''}" onclick="selectSpread('${spread.id}')"><h3 class="text-[var(--gold)] text-xl mb-1 font-occult">${spread.name}</h3><p class="text-[13px] opacity-60 font-occult">${spread.desc}</p></div>`).join('');
+            dom.spreadList.innerHTML = PREDEFINED_SPREADS.map(spread => `<div class="frosted p-5 rounded-2xl cursor-pointer active:scale-95 transition-transform border ${currentActiveSpread.id === spread.id ? 'border-[var(--gold)]' : 'border-transparent'}" onclick="selectSpread('${spread.id}')"><h3 class="text-[var(--gold)] text-xl mb-1 font-occult">${spread.name}</h3><p class="text-[13px] opacity-60 font-occult">${spread.desc}</p></div>`).join('');
         }
         window.selectSpread = (id) => { currentActiveSpread = PREDEFINED_SPREADS.find(s => s.id === id); dom.previewName.innerText = currentActiveSpread.name; dom.p2c.style.transform = 'translateX(100%)'; renderSpreadList(); };
         renderSpreadList();
 
-        document.getElementById('start-drawing-area').onclick = () => {
-            dom.p1.style.opacity = '0';
-            setTimeout(() => { dom.p1.style.pointerEvents = 'none'; startDrawingPhase(); }, 300);
-        };
+        document.getElementById('start-drawing-area').onclick = () => { dom.p1.style.opacity = '0'; setTimeout(() => { dom.p1.style.pointerEvents = 'none'; startDrawingPhase(); }, 300); };
 
-        async function fetchAIResponse(prompt, container, scrollView) {
-            // 🌟 移除多余的比喻
-            container.innerHTML = `<div class="mist-reveal text-center mt-10 font-occult">正在解析牌阵，聆听命运的启示...</div>`;
+        dom.followUpInput.addEventListener('input', function() { this.style.height = '48px'; this.style.height = (this.scrollHeight) + 'px'; });
+
+        async function fetchAIResponse(promptText) {
+            const loadingId = 'loading-' + Date.now();
+            dom.chatContainer.innerHTML += `<div id="${loadingId}" class="mist-reveal flex space-x-2 mt-4 ml-2"><span class="w-2 h-2 rounded-full bg-[var(--gold)] animate-bounce"></span><span class="w-2 h-2 rounded-full bg-[var(--gold)] animate-bounce" style="animation-delay: 0.1s"></span><span class="w-2 h-2 rounded-full bg-[var(--gold)] animate-bounce" style="animation-delay: 0.2s"></span></div>`;
+            setTimeout(() => { dom.aiScrollView.scrollTop = dom.aiScrollView.scrollHeight; }, 100);
+
             try {
-                const response = await fetch(BACKEND_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ prompt: prompt })
-                });
-
+                const response = await fetch(BACKEND_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: promptText }) });
                 const result = await response.json();
+                document.getElementById(loadingId)?.remove();
+
                 if (result.choices && result.choices[0].message) {
                     const fullText = result.choices[0].message.content;
-                    const paragraphs = fullText.split('\n').filter(p => p.trim() !== "");
-                    container.innerHTML = "";
-                    
-                    paragraphs.forEach((p, index) => {
-                        const pEl = document.createElement('div');
-                        pEl.className = "mist-reveal mb-5 font-occult";
-                        pEl.style.animationDelay = `${index * 0.3}s`; 
-                        pEl.innerText = p;
-                        container.appendChild(pEl);
-                    });
-                    
-                    setTimeout(() => { scrollView.scrollTop = scrollView.scrollHeight; }, paragraphs.length * 300 + 500);
+                    currentAIContext = promptText + "\nAI回复：" + fullText + "\n";
+                    const aiBubble = document.createElement('div');
+                    aiBubble.className = "mist-reveal mt-4 p-5 chat-bubble-ai text-[15px] leading-loose font-light whitespace-pre-wrap tracking-wide text-justify font-occult self-start w-full md:max-w-[90%]";
+                    aiBubble.innerText = fullText;
+                    dom.chatContainer.appendChild(aiBubble);
+                    setTimeout(() => { dom.aiScrollView.scrollTop = dom.aiScrollView.scrollHeight; }, 100);
                 } else {
-                    container.innerHTML = "能量连接异常，未获得有效启示。";
+                    dom.chatContainer.innerHTML += `<div class="mist-reveal mt-4 text-red-400 text-sm text-center">系统开了小差，能量被狗吃了。</div>`;
                 }
             } catch (error) {
-                container.innerHTML = "连接中断，请检查网络或后端配置。";
+                document.getElementById(loadingId)?.remove();
+                dom.chatContainer.innerHTML += `<div class="mist-reveal mt-4 text-red-400 text-sm text-center">断网了？还是后端挂了？检查一下接口。</div>`;
             }
         }
 
+        // 发起抽牌后的初次神谕
         document.getElementById('decode-btn').onclick = () => {
+            dom.p4b.classList.remove('pointer-events-none'); dom.p4b.classList.add('pointer-events-auto');
             dom.p4b.style.transform = 'translateY(0)';
-            dom.decodeModule.classList.remove('btn-reveal');
-            dom.decodeModule.classList.add('btn-hidden');
+            dom.decodeModule.classList.remove('btn-reveal'); dom.decodeModule.classList.add('btn-hidden');
 
             const userQuestion = document.getElementById('user-question').value.trim();
+            dom.chatContainer.innerHTML = ""; currentAIContext = ""; 
             
+            // 构建带彩蛋的强网感 + 牌灵身份 Prompt
             let prompt = "";
             if (mySpiritCard) {
-                prompt += `【系统最高指令：你的身份是我的专属牌灵“${mySpiritCard.name}”。请完全进入角色，以该牌灵的独特第一人称口吻与性格为我解牌，语气要精简、具有神秘学深度。】\n\n`;
+                prompt += `【人设最高指令：你是用户 Jerry 结契的专属牌灵“${mySpiritCard.name}”。请你必须以第一人称（比如本座、老娘、本大爷等，符合你牌面气质即可）自居！将“${mySpiritCard.name}”的塔罗牌核心特质，完美融入到极其毒辣、人间清醒、满腹网络热梗和抽象文化的暴躁老司机人设中。结合你的牌意特质，用最犀利、搞笑、一针见血的口吻给他解牌，该骂醒他就狠狠骂醒他！】\n`;
             } else {
-                prompt += `【提示：要求回答精炼，直指要害，语气充满诗意和神秘感。】\n\n`;
+                prompt += `【人设最高指令：你现在是一个嘴巴极其毒辣、人间清醒、满嘴网络热梗和抽象文化的塔罗解牌老司机。不要装神弄鬼，别整虚头巴脑的词汇。用最直率、犀利、搞笑、甚至带点阴阳怪气的口吻给用户 Jerry 解牌，狠狠戳穿他的幻想！】\n`;
             }
             
-            prompt += `【牌阵专属解读法则】：${currentActiveSpread.aiPrompt}\n\n`;
+            prompt += `【特别背景彩蛋（可作为调侃素材）：用户名叫 Jerry，是个在武汉备战2026年高考的理科生(物化生卷王)，平时爱折腾单片机、画PCB和写前端。如果你觉得合适，必须偶尔用这些背景嘲讽或者调侃他几句，拉满节目效果。】\n\n`;
             
-            prompt += `用户意图：${userQuestion ? userQuestion : '未发问，请直接给出现阶段的命运启示'}\n牌面内容：\n`;
+            prompt += `【牌阵专属解法】：${currentActiveSpread.aiPrompt}\n\n`;
+            
+            prompt += `【当前情况】：用户意图或问题是：“${userQuestion ? userQuestion : '未发问，让他自求多福'}”\n【抽到的牌面内容】：\n`;
             spreadCards.forEach((c, index) => {
                 prompt += `- [位置：${currentActiveSpread.slots[index].name}]：${c.tarotData.name} (${c.isReversed ? '逆位' : '正位'})\n`;
             });
 
-            fetchAIResponse(prompt, document.getElementById('ai-text-container'), document.getElementById('ai-scroll-view'));
+            if (userQuestion) {
+                const userBubble = document.createElement('div');
+                userBubble.className = "mt-4 p-4 chat-bubble-user text-[14px] leading-relaxed self-end max-w-[85%] font-occult";
+                userBubble.innerText = "Jerry: " + userQuestion;
+                dom.chatContainer.appendChild(userBubble);
+            }
+            fetchAIResponse(prompt);
         };
-        
+
+        // 处理对话流的追问
+        dom.followUpBtn.onclick = () => {
+            const text = dom.followUpInput.value.trim(); if (!text) return;
+            dom.followUpInput.value = ""; dom.followUpInput.style.height = '48px'; 
+            const userBubble = document.createElement('div');
+            userBubble.className = "mist-reveal mt-4 p-4 chat-bubble-user text-[14px] leading-relaxed self-end max-w-[85%] font-occult";
+            userBubble.innerText = "Jerry: " + text;
+            dom.chatContainer.appendChild(userBubble);
+            setTimeout(() => { dom.aiScrollView.scrollTop = dom.aiScrollView.scrollHeight; }, 50);
+            
+            // 构建带有历史语境和牌灵身份提醒的追问 Prompt
+            let followUpPrompt = "";
+            if (mySpiritCard) {
+                followUpPrompt = currentAIContext + `\n用户(Jerry)追问：“${text}”\n【系统提醒：请继续保持你作为专属牌灵“${mySpiritCard.name}”的身份，结合你的牌面特质】用同样毒舌、暴躁、懂互联网抽象文化的口吻直接怼回去或者回答他：`;
+            } else {
+                followUpPrompt = currentAIContext + `\n用户(Jerry)追问：“${text}”\n请结合上面的语境，用同样毒舌、搞笑、懂互联网抽象文化的口吻直接怼回去或者回答他：`;
+            }
+            
+            fetchAIResponse(followUpPrompt);
+        };
+        dom.followUpInput.addEventListener("keypress", function(event) { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); dom.followUpBtn.click(); } });
         document.getElementById('back-from-4b').onclick = () => location.reload(); 
 
-        const canvas = document.getElementById('tarotCanvas');
-        const ctx = canvas.getContext('2d');
-        let width, height, appPhase = 'idle'; 
-        let CARD_WIDTH, CARD_HEIGHT, particles = [], convergeStartTime = 0; 
-        let coreEnergy = 0, coreRadius = 0, targetCoreY = 0;  
-        const CONVERGE_DURATION = 1500;
+        const canvas = document.getElementById('tarotCanvas'); const ctx = canvas.getContext('2d');
+        let width, height, appPhase = 'idle'; let CARD_WIDTH, CARD_HEIGHT, particles = [], convergeStartTime = 0; 
+        let coreEnergy = 0, coreRadius = 0, targetCoreY = 0;  const CONVERGE_DURATION = 1500;
 
         function resize() {
             width = window.innerWidth; height = window.innerHeight;
             const dpr = window.devicePixelRatio || 1;
             canvas.width = width * dpr; canvas.height = height * dpr;
             ctx.scale(dpr, dpr);
-            CARD_WIDTH = Math.min(width * 0.18, 80); 
-            CARD_HEIGHT = CARD_WIDTH * 1.75;
-            targetCoreY = height * 0.85; 
+            CARD_WIDTH = Math.min(width * 0.18, 80); CARD_HEIGHT = CARD_WIDTH * 1.75; targetCoreY = height * 0.85; 
         }
         window.addEventListener('resize', resize); resize();
-
         const easeOutBack = (x) => { const c1 = 1.70158; const c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
 
         class LightParticle {
             constructor(x, y, isExplosion = false) {
-                this.x = x + (Math.random() - 0.5) * CARD_WIDTH * (isExplosion ? 0.5 : 1.5); 
-                this.y = y + (Math.random() - 0.5) * CARD_HEIGHT * (isExplosion ? 0.5 : 1.5);
+                this.x = x + (Math.random() - 0.5) * CARD_WIDTH * (isExplosion ? 0.5 : 1.5); this.y = y + (Math.random() - 0.5) * CARD_HEIGHT * (isExplosion ? 0.5 : 1.5);
                 let speedMulti = isExplosion ? 8 : 1;
                 this.vx = (Math.random() - 0.5) * 1.5 * speedMulti; this.vy = ((Math.random() - 0.5) * 1.5 - (isExplosion ? 0 : 0.5)) * speedMulti; 
                 this.baseVx = this.vx; this.baseVy = this.vy; this.life = 1.0; this.absorbed = false; 
                 this.size = Math.random() > 0.95 ? Math.random() * 2.0 + 1.0 : Math.random() * 0.8 + 0.2; 
                 this.isGold = Math.random() > 0.7; this.phaseOffset = Math.random() * 100;
-                this.isExplosion = isExplosion; 
-                this.syncThemeColor(isDarkMode); 
+                this.isExplosion = isExplosion; this.syncThemeColor(isDarkMode); 
             }
             syncThemeColor(isDark) { 
                 this.colorBase = isDark ? '#ffffff' : '#6b6b6b';
                 this.colorGold = isDark ? '#d4af37' : '#b89324';
             }
             update(appPhase) {
-                if (this.absorbed) return;
-                this.phaseOffset += 0.03; 
+                if (this.absorbed) return; this.phaseOffset += 0.03; 
                 if (appPhase === 'converging') {
                     let dx = width / 2 - this.x; let dy = targetCoreY - this.y; let dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < 15) { this.absorbed = true; this.life = 0; coreEnergy += this.size * 2; return; }
@@ -493,35 +734,22 @@
             draw(ctx) { if (this.life <= 0 || this.absorbed) return; ctx.globalAlpha = this.life * (appPhase === 'converging' ? 0.9 : 0.6); ctx.fillStyle = this.isGold ? this.colorGold : this.colorBase; ctx.fillRect(this.x, this.y, this.size, this.size); }
         }
 
-        let carouselRotation = 0, targetRotation = 0;
-        let availableCards = [], spreadCards = [], movingCards = [];
-
+        let carouselRotation = 0, targetRotation = 0; let availableCards = [], spreadCards = [], movingCards = [];
         function startDrawingPhase() { appPhase = 'drawing'; spreadCards = []; movingCards = []; particles = []; coreEnergy = 0; coreRadius = 0; carouselRotation = 0; targetRotation = 0; let shuffledDict = [...TAROT_DICT].sort(() => Math.random() - 0.5); availableCards = Array.from({length: 22}, (_, i) => ({ id: i, selected: false, tarotData: shuffledDict[i] })); }
         function startSpiritCarousel() { appPhase = 'spirit_carousel'; carouselRotation = 0; targetRotation = 0; availableCards = TAROT_DICT.slice(0, 22).map((tarotData, i) => ({ id: i, selected: false, tarotData: tarotData })); }
         
         function getSlotCoords(index, isExpanded) { 
-            const slot = currentActiveSpread.slots[index]; 
-            const slotCount = currentActiveSpread.slots.length;
-            
-            let responsiveFactor = 1;
-            if (slotCount === 4) responsiveFactor = 0.85;
-            else if (slotCount === 5) responsiveFactor = 0.75;
-            else if (slotCount >= 6) responsiveFactor = 0.65;
-            
+            const slot = currentActiveSpread.slots[index]; const slotCount = currentActiveSpread.slots.length;
+            let responsiveFactor = 1; if (slotCount === 4) responsiveFactor = 0.85; else if (slotCount === 5) responsiveFactor = 0.75; else if (slotCount >= 6) responsiveFactor = 0.65;
             if (width < 400 && slotCount >= 3) responsiveFactor *= 0.85; 
-            
-            const spreadScale = (isExpanded ? 1.4 : 0.9) * responsiveFactor; 
-            const baseY = isExpanded ? height * 0.4 : height * 0.35; 
-            const spacingX = CARD_WIDTH * 1.35 * spreadScale; 
-            const spacingY = CARD_HEIGHT * 1.15 * spreadScale; 
+            const spreadScale = (isExpanded ? 1.4 : 0.9) * responsiveFactor; const baseY = isExpanded ? height * 0.4 : height * 0.35; const spacingX = CARD_WIDTH * 1.35 * spreadScale; const spacingY = CARD_HEIGHT * 1.15 * spreadScale; 
             return { x: width / 2 + slot.x * spacingX, y: baseY + slot.y * spacingY, scale: spreadScale }; 
         }
 
         function getRenderedCarouselCards(isBig = false) {
             let cardsData = []; const radius = isBig ? width * 0.65 : width * 0.45; const centerY = isBig ? height * 0.6 : height * 0.85;
             availableCards.forEach((card, i) => {
-                if (card.selected) return;
-                const angle = (i / availableCards.length) * Math.PI * 2 + carouselRotation;
+                if (card.selected) return; const angle = (i / availableCards.length) * Math.PI * 2 + carouselRotation;
                 const z = Math.cos(angle); const x = width / 2 + Math.sin(angle) * radius; const y = centerY + z * (isBig ? 20 : 10); 
                 const scale = (isBig ? 1.2 : 0.6) + ((z + 1) / 2) * (isBig ? 0.7 : 0.4);
                 cardsData.push({ index: i, x, y, scale, z, id: card.id, tarotData: card.tarotData });
@@ -530,163 +758,97 @@
         }
 
         let isCanvasDragging = false, lastX = 0, clickStartTime = 0, hasMoved = false;
-        const canvasPointerDown = (e) => { 
-            if(appPhase === 'idle' || appPhase === 'finished' || appPhase === 'expanding' || appPhase === 'converging' || appPhase === 'spirit_revealing') return; 
-            isCanvasDragging = true; hasMoved = false; lastX = e.clientX || (e.touches && e.touches[0].clientX); clickStartTime = Date.now(); 
-        };
-        const canvasPointerMove = (e) => { 
-            if(!isCanvasDragging) return; let currentX = e.clientX || (e.touches && e.touches[0].clientX); if(Math.abs(currentX - lastX) > 5) hasMoved = true; 
-            if((appPhase === 'drawing' || appPhase === 'spirit_carousel') && hasMoved) { targetRotation += (currentX - lastX) * 0.012; lastX = currentX; } 
-        };
-        const canvasPointerUp = (e) => { 
-            if(!isCanvasDragging) return; isCanvasDragging = false; 
-            if(!hasMoved && Date.now() - clickStartTime < 300) { checkClick(e.clientX || (e.changedTouches && e.changedTouches[0].clientX), e.clientY || (e.changedTouches && e.changedTouches[0].clientY)); } 
-        };
+        const canvasPointerDown = (e) => { if(appPhase === 'idle' || appPhase === 'finished' || appPhase === 'expanding' || appPhase === 'converging' || appPhase === 'spirit_revealing') return; isCanvasDragging = true; hasMoved = false; lastX = e.clientX || (e.touches && e.touches[0].clientX); clickStartTime = Date.now(); };
+        const canvasPointerMove = (e) => { if(!isCanvasDragging) return; let currentX = e.clientX || (e.touches && e.touches[0].clientX); if(Math.abs(currentX - lastX) > 5) hasMoved = true; if((appPhase === 'drawing' || appPhase === 'spirit_carousel') && hasMoved) { targetRotation += (currentX - lastX) * 0.012; lastX = currentX; } };
+        const canvasPointerUp = (e) => { if(!isCanvasDragging) return; isCanvasDragging = false; if(!hasMoved && Date.now() - clickStartTime < 300) { checkClick(e.clientX || (e.changedTouches && e.changedTouches[0].clientX), e.clientY || (e.changedTouches && e.changedTouches[0].clientY)); } };
         canvas.addEventListener('touchstart', canvasPointerDown, {passive:false}); canvas.addEventListener('touchmove', canvasPointerMove, {passive:false}); canvas.addEventListener('touchend', canvasPointerUp);
         canvas.addEventListener('mousedown', canvasPointerDown); canvas.addEventListener('mousemove', canvasPointerMove); canvas.addEventListener('mouseup', canvasPointerUp);
 
         function checkClick(x, y) {
             if (appPhase === 'drawing') {
-                if (Date.now() - lastDrawTime < 500) return; 
-                if (spreadCards.length >= currentActiveSpread.slots.length) return;
+                if (Date.now() - lastDrawTime < 500) return; if (spreadCards.length >= currentActiveSpread.slots.length) return;
                 const renderedCards = getRenderedCarouselCards();
-                for (let i = renderedCards.length - 1; i >= 0; i--) { 
-                    const c = renderedCards[i]; 
-                    if (x > c.x - (CARD_WIDTH*c.scale)/2 && x < c.x + (CARD_WIDTH*c.scale)/2 && y > c.y - (CARD_HEIGHT*c.scale)/2 && y < c.y + (CARD_HEIGHT*c.scale)/2) { 
-                        lastDrawTime = Date.now(); drawCard(c.id, c.x, c.y, c.scale); break; 
-                    } 
-                }
+                for (let i = renderedCards.length - 1; i >= 0; i--) { const c = renderedCards[i]; if (x > c.x - (CARD_WIDTH*c.scale)/2 && x < c.x + (CARD_WIDTH*c.scale)/2 && y > c.y - (CARD_HEIGHT*c.scale)/2 && y < c.y + (CARD_HEIGHT*c.scale)/2) { lastDrawTime = Date.now(); drawCard(c.id, c.x, c.y, c.scale); break; } }
             } else if (appPhase === 'interacting') {
                 spreadCards.forEach((sc, i) => { const coords = getSlotCoords(i, true); if (sc.flipProgress === 0 && Math.abs(x - coords.x) < CARD_WIDTH && Math.abs(y - coords.y) < CARD_HEIGHT) sc.isFlipping = true; });
             } else if (appPhase === 'spirit_intro') {
                 const cx = width / 2, cy = height / 2 - 40; 
-                if (Math.abs(x - cx) < CARD_WIDTH && Math.abs(y - cy) < CARD_HEIGHT) { 
-                    if (!mySpiritCard) { 
-                        mySpiritCard = TAROT_DICT[Math.floor(Math.random() * 22)]; 
-                        localStorage.setItem('tarot_spirit_id', mySpiritCard.id);
-                        appPhase = 'spirit_revealing'; 
-                        for(let i=0; i<80; i++) particles.push(new LightParticle(cx, cy, true)); 
-                    } 
-                }
+                if (Math.abs(x - cx) < CARD_WIDTH && Math.abs(y - cy) < CARD_HEIGHT) { if (!mySpiritCard) { mySpiritCard = TAROT_DICT[Math.floor(Math.random() * 22)]; try{ localStorage.setItem('tarot_spirit_id', mySpiritCard.id); }catch(e){} appPhase = 'spirit_revealing'; for(let i=0; i<80; i++) particles.push(new LightParticle(cx, cy, true)); } }
             } else if (appPhase === 'spirit_carousel') {
                 if (Date.now() - lastDrawTime < 500) return;
                 const renderedCards = getRenderedCarouselCards(true);
-                for (let i = renderedCards.length - 1; i >= 0; i--) { 
-                    const c = renderedCards[i]; 
-                    if (x > c.x - (CARD_WIDTH*c.scale)/2 && x < c.x + (CARD_WIDTH*c.scale)/2 && y > c.y - (CARD_HEIGHT*c.scale)/2 && y < c.y + (CARD_HEIGHT*c.scale)/2) { 
-                        lastDrawTime = Date.now();
-                        mySpiritCard = c.tarotData; 
-                        localStorage.setItem('tarot_spirit_id', mySpiritCard.id);
-                        appPhase = 'spirit_revealing'; 
-                        for(let k=0; k<80; k++) particles.push(new LightParticle(width/2, height/2 - 40, true)); 
-                        break; 
-                    } 
-                }
+                for (let i = renderedCards.length - 1; i >= 0; i--) { const c = renderedCards[i]; if (x > c.x - (CARD_WIDTH*c.scale)/2 && x < c.x + (CARD_WIDTH*c.scale)/2 && y > c.y - (CARD_HEIGHT*c.scale)/2 && y < c.y + (CARD_HEIGHT*c.scale)/2) { lastDrawTime = Date.now(); mySpiritCard = c.tarotData; try{ localStorage.setItem('tarot_spirit_id', mySpiritCard.id); }catch(e){} appPhase = 'spirit_revealing'; for(let k=0; k<80; k++) particles.push(new LightParticle(width/2, height/2 - 40, true)); break; } }
             }
         }
 
         function drawCard(id, startX, startY, startScale) {
-            const card = availableCards.find(c => c.id === id); card.selected = true;
-            const slotIndex = spreadCards.length; const target = getSlotCoords(slotIndex, false);
+            const card = availableCards.find(c => c.id === id); card.selected = true; const slotIndex = spreadCards.length; const target = getSlotCoords(slotIndex, false);
             movingCards.push({ id: card.id, startX: startX, startY: startY, startScale: startScale, targetX: target.x, targetY: target.y, targetScale: target.scale, progress: 0 });
             spreadCards.push({ id: card.id, tarotData: card.tarotData, isReversed: Math.random() > 0.5, flipProgress: 0, isFlipping: false, textProgress: 0 });
             if(spreadCards.length === currentActiveSpread.slots.length) setTimeout(startExpansion, 500);
         }
 
-        function startExpansion() { 
-            appPhase = 'expanding'; 
-            spreadCards.forEach((sc, i) => { const current = getSlotCoords(i, false); const target = getSlotCoords(i, true); movingCards.push({ id: sc.id, startX: current.x, startY: current.y, startScale: current.scale, targetX: target.x, targetY: target.y, targetScale: target.scale, progress: 0 }); }); 
-            setTimeout(() => { appPhase = 'interacting'; }, 800); 
-        }
+        function startExpansion() { appPhase = 'expanding'; spreadCards.forEach((sc, i) => { const current = getSlotCoords(i, false); const target = getSlotCoords(i, true); movingCards.push({ id: sc.id, startX: current.x, startY: current.y, startScale: current.scale, targetX: target.x, targetY: target.y, targetScale: target.scale, progress: 0 }); }); setTimeout(() => { appPhase = 'interacting'; }, 800); }
 
         function drawGraphic(x, y, scale, isPlaceholder = false, flipProgress = 0, textProgress = 0, tarotData = null, isReversed = false, hideBackDecor = false, isFocused = false) {
             ctx.save(); ctx.translate(x, y); 
-            
-            let breathe = 0;
-            if (isFocused && isPlaceholder) {
-                breathe = (Math.sin(Date.now() / 150) + 1) / 2;
-            }
-
-            const flipScale = Math.cos(flipProgress * Math.PI); 
-            ctx.scale(scale * flipScale, scale);
-            const w = CARD_WIDTH, h = CARD_HEIGHT; const isDark = isDarkMode;
+            let breathe = 0; if (isFocused && isPlaceholder) breathe = (Math.sin(Date.now() / 150) + 1) / 2;
+            const flipScale = Math.cos(flipProgress * Math.PI); ctx.scale(scale * flipScale, scale);
+            const w = CARD_WIDTH, h = CARD_HEIGHT; const isDark = !document.body.classList.contains('light');
             
             if (isPlaceholder) { 
                 ctx.fillStyle = isDark ? '#111114' : '#e5e5e5'; 
                 ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8); ctx.fill(); 
-                
                 if (isFocused) {
-                    ctx.save();
-                    ctx.shadowBlur = 10 + 15 * breathe;
-                    ctx.shadowColor = 'rgba(212, 175, 55, 0.8)';
-                    ctx.strokeStyle = `rgba(212, 175, 55, ${0.5 + 0.5 * breathe})`;
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    ctx.restore();
+                    ctx.save(); ctx.shadowBlur = 10 + 15 * breathe; ctx.shadowColor = isDark ? 'rgba(212, 175, 55, 0.8)' : 'rgba(184, 147, 36, 0.6)';
+                    ctx.strokeStyle = isDark ? `rgba(212, 175, 55, ${0.5 + 0.5 * breathe})` : `rgba(184, 147, 36, ${0.5 + 0.5 * breathe})`;
+                    ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
                 } else {
-                    ctx.setLineDash([5, 5]); 
-                    ctx.strokeStyle = isDark ? 'rgba(212, 175, 55, 0.3)' : 'rgba(212, 175, 55, 0.6)'; 
-                    ctx.stroke(); 
+                    ctx.setLineDash([5, 5]); ctx.strokeStyle = isDark ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 147, 36, 0.4)'; ctx.stroke(); 
                 }
             } 
             else if (flipScale >= 0) { 
-                const grad = ctx.createLinearGradient(-w/2, -h/2, w/2, h/2); grad.addColorStop(0, isDark ? '#1c1c24' : '#ffffff'); grad.addColorStop(1, isDark ? '#0a0a0c' : '#f0f0f0'); ctx.fillStyle = grad; ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8); ctx.fill(); 
-                
-                ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8);
-                ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 1.5; ctx.stroke(); 
-                
-                if(hideBackDecor) { ctx.fillStyle = 'var(--gold)'; ctx.font = `lighter ${Math.floor(CARD_WIDTH * 0.8)}px 'Didot', serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('O', 0, 0); } 
+                // 🌟 AI 牌背渲染逻辑 
+                if (backImgLoaded && !isPlaceholder) {
+                    ctx.save();
+                    ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8); ctx.clip(); 
+                    const zoom = 1.02; const dw = w * zoom, dh = h * zoom;
+                    ctx.drawImage(customBackImg, -dw/2, -dh/2, dw, dh);
+                    ctx.restore();
+                    
+                    // 统一画金边
+                    ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8);
+                    ctx.strokeStyle = isDark ? '#d4af37' : '#b89324'; ctx.lineWidth = 1.5; ctx.stroke();
+                } else {
+                    // 默认几何兜底逻辑
+                    const grad = ctx.createLinearGradient(-w/2, -h/2, w/2, h/2); grad.addColorStop(0, isDark ? '#1c1c24' : '#ffffff'); grad.addColorStop(1, isDark ? '#0a0a0c' : '#f0f0f0'); ctx.fillStyle = grad; ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8); ctx.fill(); 
+                    ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8); ctx.strokeStyle = isDark ? '#d4af37' : '#b89324'; ctx.lineWidth = 1.5; ctx.stroke(); 
+                    if(hideBackDecor) { ctx.fillStyle = isDark ? '#d4af37' : '#b89324'; ctx.font = `lighter ${Math.floor(CARD_WIDTH * 0.8)}px 'Didot', serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('O', 0, 0); } 
+                }
             } else { 
                 ctx.scale(-1, 1); 
-                
                 ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8);
-                
                 if (tarotData && imageCache[tarotData.id]) { 
-                    ctx.save(); ctx.clip(); 
-                    if (isReversed) ctx.rotate(Math.PI); 
-                    
-                    const zoom = 1.18; 
-                    const dw = w * zoom, dh = h * zoom;
+                    ctx.save(); ctx.clip(); if (isReversed) ctx.rotate(Math.PI); 
+                    const zoom = 1.18; const dw = w * zoom, dh = h * zoom;
                     ctx.drawImage(imageCache[tarotData.id], -dw/2, -dh/2, dw, dh); 
-                    
-                    ctx.beginPath();
-                    ctx.roundRect(-w/2 + 5, -h/2 + 5, w - 10, h - 10, 4);
-                    ctx.strokeStyle = 'rgba(212, 175, 55, 0.6)';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                    
+                    ctx.beginPath(); ctx.roundRect(-w/2 + 5, -h/2 + 5, w - 10, h - 10, 4);
+                    ctx.strokeStyle = isDark ? 'rgba(212, 175, 55, 0.6)' : 'rgba(184, 147, 36, 0.6)'; ctx.lineWidth = 1; ctx.stroke();
                     ctx.restore(); 
-                } 
-                else { ctx.fillStyle = isDark ? '#111114' : '#e5e5e5'; ctx.fill(); }
+                } else { ctx.fillStyle = isDark ? '#111114' : '#e5e5e5'; ctx.fill(); }
                 
-                ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8);
-                ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 1.5; ctx.stroke();
+                ctx.beginPath(); ctx.roundRect(-w/2, -h/2, w, h, 8); ctx.strokeStyle = isDark ? '#d4af37' : '#b89324'; ctx.lineWidth = 1.5; ctx.stroke();
 
                 if (tarotData && textProgress > 0.01) { 
                     ctx.save(); let t = easeOutBack(textProgress); let startX = w/2 - 20; let endX = w/2 + 8; let currentX = startX + (endX - startX) * t; 
-                    ctx.translate(currentX, 0); ctx.rotate(Math.PI / 2); 
-                    let label = tarotData.num; if(isReversed) label += " (逆)"; 
+                    ctx.translate(currentX, 0); ctx.rotate(Math.PI / 2); let label = tarotData.num; if(isReversed) label += " (逆)"; 
                     
-                    let fontSize = 20;
-                    ctx.font = `lighter ${fontSize}px ${FONT_OCCULT}`; 
-                    let textMetrics = ctx.measureText(label);
-                    let maxLen = h * 0.85; 
-                    if (textMetrics.width > maxLen) {
-                        fontSize = fontSize * (maxLen / textMetrics.width);
-                        ctx.font = `lighter ${fontSize}px ${FONT_OCCULT}`;
-                    }
-
-                    let blurAmt = Math.max(0, (1 - textProgress) * 5); 
-                    ctx.filter = `blur(${blurAmt}px)`; ctx.globalAlpha = Math.min(1, textProgress * 1.5); 
+                    let fontSize = 20; ctx.font = `lighter ${fontSize}px ${FONT_OCCULT}`; let textMetrics = ctx.measureText(label); let maxLen = h * 0.85; 
+                    if (textMetrics.width > maxLen) { fontSize = fontSize * (maxLen / textMetrics.width); ctx.font = `lighter ${fontSize}px ${FONT_OCCULT}`; }
+                    let blurAmt = Math.max(0, (1 - textProgress) * 5); ctx.filter = `blur(${blurAmt}px)`; ctx.globalAlpha = Math.min(1, textProgress * 1.5); 
                     
-                    let textGrad = ctx.createLinearGradient(0, 10, 0, -20); 
-                    textGrad.addColorStop(0, 'rgba(212, 175, 55, 0)'); 
-                    textGrad.addColorStop(0.5, isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)'); 
-                    textGrad.addColorStop(1, isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'); 
-                    ctx.fillStyle = textGrad; 
-                    
-                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, 0, 0); 
-                    ctx.restore(); 
+                    let textGrad = ctx.createLinearGradient(0, 10, 0, -20); textGrad.addColorStop(0, 'rgba(212, 175, 55, 0)'); textGrad.addColorStop(0.5, isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)'); textGrad.addColorStop(1, isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'); ctx.fillStyle = textGrad; 
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, 0, 0); ctx.restore(); 
                 }
             }
             ctx.restore();
@@ -697,104 +859,45 @@
             
             if (appPhase.startsWith('spirit_')) {
                 if (Math.random() > 0.8 && particles.length < 100) particles.push(new LightParticle(width/2, height/2 - 40));
-                
-                ctx.save();
-                ctx.globalCompositeOperation = isDarkMode ? 'screen' : 'source-over';
-                particles.forEach((p, index) => { p.update(appPhase); p.draw(ctx); if (p.life <= 0 || p.absorbed) particles.splice(index, 1); });
-                ctx.restore();
-
+                ctx.save(); ctx.globalCompositeOperation = document.body.classList.contains('light') ? 'source-over' : 'screen';
+                particles.forEach((p, index) => { p.update(appPhase); p.draw(ctx); if (p.life <= 0 || p.absorbed) particles.splice(index, 1); }); ctx.restore();
                 const cy = height/2 - 40;
-
-                if (appPhase === 'spirit_intro') {
-                    spiritScale += (2.0 - spiritScale) * 0.1; 
-                    drawGraphic(width/2, cy, spiritScale, false, 0, 0, null, false, true); 
-                } 
-                else if (appPhase === 'spirit_carousel') { 
-                    getRenderedCarouselCards(true).forEach(c => drawGraphic(c.x, c.y, c.scale, false, 1, 1, c.tarotData, false)); 
-                } 
-                else if (appPhase === 'spirit_revealing') { 
-                    spiritFlipProgress += 0.02; 
-                    let flip = Math.min(spiritFlipProgress * 2, 1);
-                    drawGraphic(width/2, cy, 2.0, false, flip, 1, mySpiritCard, false, flip < 0.5);
-                    if (spiritFlipProgress >= 0.5) appPhase = 'spirit_revealed';
-                }
-                else if (appPhase === 'spirit_revealed') { 
-                    drawGraphic(width/2, cy, 2.0, false, 1, 1, mySpiritCard, false); 
-                    ctx.fillStyle = 'var(--gold)'; ctx.font = `300 24px ${FONT_OCCULT}`; ctx.textAlign = 'center'; 
-                    ctx.fillText(mySpiritCard.name, width/2, cy + (CARD_HEIGHT * 2.0)/2 + 50); 
-                }
-                else if (appPhase === 'spirit_exit') {
-                    spiritScale -= 0.15;
-                    if (spiritScale > 0) {
-                        drawGraphic(width/2, cy, Math.max(0, spiritScale), false, mySpiritCard ? 1 : 0, 1, mySpiritCard, false, !mySpiritCard);
-                    } else {
-                        dom.p2a.classList.add('translate-y-full');
-                        dom.p1.style.opacity = '1'; 
-                        dom.p1.style.pointerEvents = 'auto'; 
-                        appPhase = 'idle'; 
-                        particles = [];
-                    }
-                }
+                if (appPhase === 'spirit_intro') { spiritScale += (2.0 - spiritScale) * 0.1; drawGraphic(width/2, cy, spiritScale, false, 0, 0, null, false, true); } 
+                else if (appPhase === 'spirit_carousel') { getRenderedCarouselCards(true).forEach(c => drawGraphic(c.x, c.y, c.scale, false, 1, 1, c.tarotData, false)); } 
+                else if (appPhase === 'spirit_revealing') { spiritFlipProgress += 0.02; let flip = Math.min(spiritFlipProgress * 2, 1); drawGraphic(width/2, cy, 2.0, false, flip, 1, mySpiritCard, false, flip < 0.5); if (spiritFlipProgress >= 0.5) appPhase = 'spirit_revealed'; }
+                else if (appPhase === 'spirit_revealed') { drawGraphic(width/2, cy, 2.0, false, 1, 1, mySpiritCard, false); ctx.fillStyle = document.body.classList.contains('light') ? '#b89324' : '#d4af37'; ctx.font = `300 24px ${FONT_OCCULT}`; ctx.textAlign = 'center'; ctx.fillText(mySpiritCard.name, width/2, cy + (CARD_HEIGHT * 2.0)/2 + 50); }
+                else if (appPhase === 'spirit_exit') { spiritScale -= 0.15; if (spiritScale > 0) { drawGraphic(width/2, cy, Math.max(0, spiritScale), false, mySpiritCard ? 1 : 0, 1, mySpiritCard, false, !mySpiritCard); } else { dom.p2a.classList.add('translate-y-full'); dom.p1.style.opacity = '1'; dom.p1.style.pointerEvents = 'auto'; appPhase = 'idle'; particles = []; } }
             } 
             else if (appPhase !== 'idle') {
                 const isExpanded = appPhase !== 'drawing';
-                
                 currentActiveSpread.slots.forEach((s, i) => {
-                    const coords = getSlotCoords(i, isExpanded); 
-                    let isWaitingSlot = (appPhase === 'drawing' && i === spreadCards.length);
+                    const coords = getSlotCoords(i, isExpanded); let isWaitingSlot = (appPhase === 'drawing' && i === spreadCards.length);
                     drawGraphic(coords.x, coords.y, coords.scale, true, 0, 0, null, false, false, isWaitingSlot); 
-                    
-                    let textOpacity = 1;
-                    if (spreadCards[i]) {
-                        textOpacity = Math.max(0, 1 - spreadCards[i].flipProgress * 2);
-                    }
+                    let textOpacity = 1; if (spreadCards[i]) { textOpacity = Math.max(0, 1 - spreadCards[i].flipProgress * 2); }
                     if (appPhase === 'converging' || appPhase === 'finished') textOpacity = 0;
-
-                    if (textOpacity > 0) {
-                        ctx.save();
-                        ctx.fillStyle = isDarkMode ? `rgba(255,255,255,${0.6 * textOpacity})` : `rgba(0,0,0,${0.6 * textOpacity})`;
-                        ctx.font = `300 12px ${FONT_OCCULT}`;
-                        ctx.textAlign = 'center';
-                        ctx.fillText(s.name, coords.x, coords.y + (CARD_HEIGHT * coords.scale)/2 + 25);
-                        ctx.restore();
-                    }
+                    if (textOpacity > 0) { ctx.save(); ctx.fillStyle = document.body.classList.contains('light') ? `rgba(0,0,0,${0.6 * textOpacity})` : `rgba(255,255,255,${0.6 * textOpacity})`; ctx.font = `300 ${Math.max(11, 13 * coords.scale)}px ${FONT_OCCULT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(s.name, coords.x, coords.y); ctx.restore(); }
                 });
                 
                 if (appPhase !== 'finished') {
-                    ctx.save(); 
-                    ctx.globalCompositeOperation = isDarkMode ? 'screen' : 'source-over'; 
-                    
-                    if (appPhase === 'converging' && coreEnergy > 0) {
-                        let targetRadius = Math.min(80, Math.max(10, coreEnergy)); coreRadius += (targetRadius - coreRadius) * 0.1; 
-                        if (coreRadius > 1) { let gradient = ctx.createRadialGradient(width/2, targetCoreY, 0, width/2, targetCoreY, coreRadius); gradient.addColorStop(0, isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(212, 175, 55, 0.8)'); gradient.addColorStop(0.3, 'rgba(212, 175, 55, 0.6)'); gradient.addColorStop(1, 'rgba(212, 175, 55, 0)'); ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(width/2, targetCoreY, coreRadius, 0, Math.PI*2); ctx.fill(); }
-                    }
-                    particles.forEach((p, index) => { p.update(appPhase); p.draw(ctx); if (p.life <= 0 || p.absorbed) particles.splice(index, 1); });
-                    ctx.restore();
+                    ctx.save(); ctx.globalCompositeOperation = document.body.classList.contains('light') ? 'source-over' : 'screen'; 
+                    if (appPhase === 'converging' && coreEnergy > 0) { let targetRadius = Math.min(80, Math.max(10, coreEnergy)); coreRadius += (targetRadius - coreRadius) * 0.1; if (coreRadius > 1) { let gradient = ctx.createRadialGradient(width/2, targetCoreY, 0, width/2, targetCoreY, coreRadius); gradient.addColorStop(0, document.body.classList.contains('light') ? 'rgba(184, 147, 36, 0.8)' : 'rgba(255, 255, 255, 0.8)'); gradient.addColorStop(0.3, document.body.classList.contains('light') ? 'rgba(184, 147, 36, 0.4)' : 'rgba(212, 175, 55, 0.6)'); gradient.addColorStop(1, 'rgba(212, 175, 55, 0)'); ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(width/2, targetCoreY, coreRadius, 0, Math.PI*2); ctx.fill(); } }
+                    particles.forEach((p, index) => { p.update(appPhase); p.draw(ctx); if (p.life <= 0 || p.absorbed) particles.splice(index, 1); }); ctx.restore();
                 }
                 
                 if (appPhase === 'drawing') getRenderedCarouselCards().forEach(c => drawGraphic(c.x, c.y, c.scale, false, 0));
-                
                 for (let i = movingCards.length - 1; i >= 0; i--) { let mc = movingCards[i]; mc.progress += 0.04; let t = Math.min(mc.progress, 1); let easeT = 1 - Math.pow(1 - t, 3); drawGraphic(mc.startX + (mc.targetX - mc.startX) * easeT, mc.startY + (mc.targetY - mc.startY) * easeT, mc.startScale + (mc.targetScale - mc.startScale) * easeT, false, 0); if (t === 1) movingCards.splice(i, 1); }
                 let allFlipped = spreadCards.length > 0;
                 
                 spreadCards.forEach((sc, i) => {
-                    const coords = getSlotCoords(i, isExpanded);
-                    if (sc.isFlipping) { sc.flipProgress += 0.035; if(sc.flipProgress >= 1) sc.isFlipping = false; }
+                    const coords = getSlotCoords(i, isExpanded); if (sc.isFlipping) { sc.flipProgress += 0.035; if(sc.flipProgress >= 1) sc.isFlipping = false; }
                     if (sc.flipProgress >= 0.5) { sc.textProgress += 0.015; if (sc.textProgress > 1) sc.textProgress = 1; if (appPhase === 'interacting' && Math.random() > 0.05) for(let k=0; k<3; k++) particles.push(new LightParticle(coords.x, coords.y)); }
                     if (sc.flipProgress < 1) allFlipped = false;
                     if (!movingCards.some(mc => mc.id === sc.id)) drawGraphic(coords.x, coords.y, coords.scale, false, sc.flipProgress, sc.textProgress, sc.tarotData, sc.isReversed);
                 });
                 
                 if (appPhase === 'interacting' && allFlipped && !movingCards.length && !spreadCards.some(sc => sc.isFlipping)) { 
-                    appPhase = 'converging'; 
-                    convergeStartTime = Date.now(); 
-                    setTimeout(() => { 
-                        appPhase = 'finished'; 
-                        coreEnergy = 0; 
-                        coreRadius = 0; 
-                        particles = []; 
-                        dom.decodeModule.classList.replace('btn-hidden', 'btn-reveal'); 
-                    }, CONVERGE_DURATION); 
+                    appPhase = 'converging'; convergeStartTime = Date.now(); 
+                    setTimeout(() => { appPhase = 'finished'; coreEnergy = 0; coreRadius = 0; particles = []; dom.decodeModule.classList.replace('btn-hidden', 'btn-reveal'); }, CONVERGE_DURATION); 
                 }
             }
             requestAnimationFrame(render);
