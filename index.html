@@ -21,8 +21,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>  
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400&display=swap" rel="stylesheet">  
       
-    <script src="https://cdn.tailwindcss.com"></script>  
-    <style>  
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
         /* 核心调色板与全局变量 */  
         :root {   
             --font-occult: 'Didot', 'Bodoni MT', 'Noto Serif SC', 'Songti SC', serif;  
@@ -458,7 +459,8 @@
         }  
   
         // 🌟 抽牌初次神谕逻辑 (已脱敏) 🌟  
-        document.getElementById('decode-btn').onclick = () => {  
+        document.getElementById('decode-btn').onclick = () => {
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); }  
             dom.p4b.classList.remove('pointer-events-none'); dom.p4b.classList.add('pointer-events-auto');  
             dom.p4b.classList.remove('translate-y-full');  
             dom.decodeModule.classList.remove('btn-reveal'); dom.decodeModule.classList.add('btn-hidden');  
@@ -489,7 +491,8 @@
         };  
   
         // 🌟 追问逻辑 (已脱敏) 🌟  
-        dom.followUpBtn.onclick = () => {  
+        dom.followUpBtn.onclick = () => {
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); }  
             const text = dom.followUpInput.value.trim(); if (!text) return;  
             dom.followUpInput.value = ""; dom.followUpInput.style.height = '48px';   
             const userBubble = document.createElement('div');  
@@ -582,8 +585,9 @@
         canvas.addEventListener('touchstart', canvasPointerDown, {passive:false}); canvas.addEventListener('touchmove', canvasPointerMove, {passive:false}); canvas.addEventListener('touchend', canvasPointerUp);  
         canvas.addEventListener('mousedown', canvasPointerDown); canvas.addEventListener('mousemove', canvasPointerMove); canvas.addEventListener('mouseup', canvasPointerUp);  
   
-        function checkClick(x, y) {  
-            if (appPhase === 'drawing') {  
+        function startDrawingPhase() {
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); }
+            appPhase = 'drawing';
                 if (Date.now() - lastDrawTime < 500) return; if (spreadCards.length >= currentActiveSpread.slots.length) return;  
                 const renderedCards = getRenderedCarouselCards();  
                 for (let i = renderedCards.length - 1; i >= 0; i--) { const c = renderedCards[i]; if (x > c.x - (CARD_WIDTH*c.scale)/2 && x < c.x + (CARD_WIDTH*c.scale)/2 && y > c.y - (CARD_HEIGHT*c.scale)/2 && y < c.y + (CARD_HEIGHT*c.scale)/2) { lastDrawTime = Date.now(); drawCard(c.id, c.x, c.y, c.scale); break; } }  
@@ -599,7 +603,8 @@
             }  
         }  
   
-        function drawCard(id, startX, startY, startScale) {  
+        function drawCard(id, startX, startY, startScale) {
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); }  
             const card = availableCards.find(c => c.id === id); card.selected = true; const slotIndex = spreadCards.length; const target = getSlotCoords(slotIndex, false);  
             movingCards.push({ id: card.id, startX: startX, startY: startY, startScale: startScale, targetX: target.x, targetY: target.y, targetScale: target.scale, progress: 0 });  
             spreadCards.push({ id: card.id, tarotData: card.tarotData, isReversed: Math.random() > 0.5, flipProgress: 0, isFlipping: false, textProgress: 0 });  
