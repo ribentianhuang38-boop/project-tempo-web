@@ -131,6 +131,18 @@
             top: max(2rem, env(safe-area-inset-top));  
         }  
           
+        /* ===== 契约登录层 ===== */
+        #login-page { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); background: rgba(0,0,0,0.6); transition: opacity 0.8s ease, visibility 0.8s ease; pointer-events: auto; }
+        #login-page.hidden-login { opacity: 0; visibility: hidden; pointer-events: none; }
+        .login-card { background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 24px; padding: 40px 32px; width: 90%; max-width: 360px; text-align: center; }
+        .login-card input { width: 100%; padding: 14px 20px; border-radius: 16px; border: 1px solid var(--glass-border); background: var(--input-bg); color: var(--text); font-size: 14px; outline: none; margin-bottom: 12px; transition: border-color 0.3s; font-family: var(--font-occult); }
+        .login-card input:focus { border-color: var(--gold); }
+        .login-card input::placeholder { color: var(--text); opacity: 0.3; }
+        .login-error { color: #ff6b6b; font-size: 12px; margin-top: 8px; min-height: 18px; }
+        #login-page .btn-oracle { width: 100%; padding: 14px 0; border-radius: 16px; font-size: 14px; cursor: pointer; margin-top: 4px; }
+        .login-divider { display: flex; align-items: center; margin: 20px 0; gap: 12px; }
+        .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--glass-border); }
+        .login-divider span { font-size: 11px; opacity: 0.4; letter-spacing: 0.2em; font-family: var(--font-occult); }
         /* 聊天气泡自适应 */  
         .chat-bubble-user {  
             background: var(--bubble-user-bg);  
@@ -150,10 +162,25 @@
 </head>  
 <body class="dark h-screen w-screen relative">  
   
-    <canvas id="tarotCanvas"></canvas>  
-  
-    <!-- 首页容器 -->  
-    <div id="page-1" class="absolute inset-0 layer-10 flex flex-col items-center justify-center pointer-events-auto transition-opacity duration-500">  
+    <canvas id="tarotCanvas"></canvas>
+
+    <!-- 契约登录层 -->
+    <div id="login-page" class="hidden-login">
+        <div class="login-card">
+            <p class="text-[var(--gold)] text-[10px] tracking-[0.5em] opacity-60 mb-2 font-occult">✦ MYSTIC PORTAL ✦</p>
+            <h1 class="text-3xl text-[var(--gold)] tracking-[0.2em] mb-1 font-occult">塔罗·时光</h1>
+            <p class="text-xs opacity-40 tracking-[0.3em] mb-8 font-occult">契约入口</p>
+            <button id="tg-login-btn" class="btn-oracle" onclick="telegramLogin()">✧ Telegram 一键登录 ✧</button>
+            <div class="login-divider"><span>或</span></div>
+            <input type="email" id="login-email" placeholder="邮箱地址" autocomplete="email">
+            <input type="password" id="login-password" placeholder="密码" autocomplete="current-password">
+            <button class="btn-oracle" onclick="emailLogin()">✧ 邮箱登录 ✧</button>
+            <div id="login-error" class="login-error"></div>
+        </div>
+    </div>
+
+    <!-- 首页容器 -->
+    <div id="page-1" class="absolute inset-0 layer-10 flex flex-col items-center justify-center pointer-events-auto transition-opacity duration-500" style="opacity:0; pointer-events:none;">  
         <div class="absolute left-6 right-6 flex justify-between items-start pointer-events-none safe-top-nav" id="top-nav">  
             <button id="theme-toggle" class="w-12 h-12 rounded-full frosted shadow-[0_0_15px_rgba(212,175,55,0.2)] active:scale-95 transition-transform pointer-events-auto flex items-center justify-center">  
                 <span id="theme-icon" class="text-xl leading-none">🌙</span>  
@@ -723,7 +750,52 @@
             }  
             requestAnimationFrame(render);  
         }  
-        render();  
-    </script>  
+        render();
+        // ===== 契约登录系统 =====
+        function checkAuth() {
+            const loginPage = document.getElementById('login-page');
+            const page1 = document.getElementById('page-1');
+            const stored = localStorage.getItem('tarot_auth_token');
+            if (stored) { page1.style.opacity = '1'; page1.style.pointerEvents = 'auto'; loginPage.classList.add('hidden-login'); return; }
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+                const token = 'tg_' + tgUser.id + '_' + Date.now();
+                const profile = { method: 'telegram', id: tgUser.id, name: tgUser.first_name, avatar: tgUser.photo_url || '' };
+                localStorage.setItem('tarot_auth_token', token);
+                localStorage.setItem('tarot_user_profile', JSON.stringify(profile));
+                page1.style.opacity = '1'; page1.style.pointerEvents = 'auto'; loginPage.classList.add('hidden-login'); return;
+            }
+            page1.style.opacity = '0'; page1.style.pointerEvents = 'none'; loginPage.classList.remove('hidden-login');
+        }
+        function telegramLogin() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                const tg = window.Telegram.WebApp;
+                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    const tgUser = tg.initDataUnsafe.user;
+                    localStorage.setItem('tarot_auth_token', 'tg_' + tgUser.id + '_' + Date.now());
+                    localStorage.setItem('tarot_user_profile', JSON.stringify({ method: 'telegram', id: tgUser.id, name: tgUser.first_name, avatar: tgUser.photo_url || '' }));
+                    transitionToApp();
+                } else { document.getElementById('login-error').innerText = '请在 Telegram 内打开此应用'; }
+            } else { document.getElementById('login-error').innerText = '未检测到 Telegram 环境'; }
+        }
+        function emailLogin() {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            const errorEl = document.getElementById('login-error'); errorEl.innerText = '';
+            if (!email) { errorEl.innerText = '请输入邮箱地址'; return; }
+            if (!password) { errorEl.innerText = '请输入密码'; return; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errorEl.innerText = '邮箱格式不正确'; return; }
+            if (password.length < 6) { errorEl.innerText = '密码至少6位'; return; }
+            localStorage.setItem('tarot_auth_token', 'email_' + btoa(email) + '_' + Date.now());
+            localStorage.setItem('tarot_user_profile', JSON.stringify({ method: 'email', email: email, name: email.split('@')[0] }));
+            transitionToApp();
+        }
+        function logout() { localStorage.removeItem('tarot_auth_token'); localStorage.removeItem('tarot_user_profile'); location.reload(); }
+        function transitionToApp() {
+            document.getElementById('login-page').classList.add('hidden-login');
+            const p = document.getElementById('page-1'); p.style.opacity = '1'; p.style.pointerEvents = 'auto';
+        }
+        checkAuth();
+    </script>
 </body>  
 </html>  
