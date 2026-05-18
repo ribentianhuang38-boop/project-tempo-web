@@ -836,7 +836,7 @@
                 const tg = window.Telegram.WebApp;
                 if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                     const tgUser = tg.initDataUnsafe.user;
-                    localStorage.setItem('tarot_auth_token', 'tg_' + tgUser.id + '_' + Date.now());
+                    localStorage.setItem('auth_token', JSON.stringify({ id: 'tg_' + tgUser.id, name: tgUser.first_name, platform: 'telegram' }));
                     localStorage.setItem('tarot_user_profile', JSON.stringify({ method: 'telegram', id: tgUser.id, name: tgUser.first_name, avatar: tgUser.photo_url || '' }));
                     transitionToApp();
                 } else { document.getElementById('login-error').innerText = '请在 Telegram 内打开此应用'; }
@@ -881,7 +881,7 @@
                 }, 500);
             }, 800);
         }
-        function logout() { localStorage.removeItem('tarot_auth_token'); localStorage.removeItem('tarot_user_profile'); location.reload(); }
+        function logout() { localStorage.removeItem('auth_token'); localStorage.removeItem('tarot_user_profile'); location.reload(); }
         function transitionToApp() {
             document.getElementById('login-page').classList.add('hidden-login');
             const p = document.getElementById('page-1'); p.style.opacity = '1'; p.style.pointerEvents = 'auto';
