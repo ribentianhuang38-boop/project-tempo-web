@@ -426,7 +426,7 @@
   
         let globalDrag = false, globalStartX = 0;  
         const startGlobalDrag = (e) => {  
-            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('#profile-btn') || e.target.closest('#page-2c') || e.target.closest('#ai-scroll-view') || e.target.closest('#start-drawing-area')) return;  
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('#profile-btn') || e.target.closest('#page-2c') || e.target.closest('#ai-scroll-view') || e.target.closest('#start-drawing-area') || e.target.closest('#login-page')) return;  
             globalDrag = true; globalStartX = e.clientX || (e.touches && e.touches[0].clientX);  
         };  
         const endGlobalDrag = (e) => {  
@@ -824,7 +824,7 @@
 
             // 1) Telegram 环境：立即自动登录，不等 Supabase
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                page1.style.opacity = '1'; page1.style.pointerEvents = 'auto';
+                page1.style.opacity = '1'; 
                 loginPage.classList.add('hidden-login');
                 // 后台静默同步 Supabase（不阻塞 UI）
                 telegramLogin().catch(() => {});
@@ -834,7 +834,7 @@
             // 2) 本地 token：立即放行
             const stored = localStorage.getItem('tarot_auth_token');
             if (stored) {
-                page1.style.opacity = '1'; page1.style.pointerEvents = 'auto';
+                page1.style.opacity = '1'; 
                 loginPage.classList.add('hidden-login');
                 return;
             }
@@ -846,14 +846,14 @@
                 const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
                 if (session) {
                     localStorage.setItem('tarot_auth_token', session.access_token);
-                    page1.style.opacity = '1'; page1.style.pointerEvents = 'auto';
+                    page1.style.opacity = '1'; 
                     loginPage.classList.add('hidden-login');
                     return;
                 }
             } catch(e) { console.warn('Supabase session 检查超时或失败:', e.message); }
 
             // 4) 什么都没有：显示登录页
-            page1.style.opacity = '0'; page1.style.pointerEvents = 'none';
+            page1.style.opacity = '0'; 
             loginPage.classList.remove('hidden-login');
         }
 
@@ -935,7 +935,7 @@
 
         function transitionToApp() {
             document.getElementById('login-page').classList.add('hidden-login');
-            const p = document.getElementById('page-1'); p.style.opacity = '1'; p.style.pointerEvents = 'auto';
+            const p = document.getElementById('page-1'); p.style.opacity = '1'; 
         }
         checkAuth();
     </script>
