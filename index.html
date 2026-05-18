@@ -470,7 +470,7 @@
         window.selectSpread = (id) => { currentActiveSpread = PREDEFINED_SPREADS.find(s => s.id === id); dom.previewName.innerText = currentActiveSpread.name; dom.p2c.classList.add('translate-x-full'); renderSpreadList(); };  
         renderSpreadList();  
   
-        document.getElementById('start-drawing-area').onclick = () => { dom.p1.style.opacity = '0'; setTimeout(() => { dom.p1.style.pointerEvents = 'none'; startDrawingPhase(); }, 300); };  
+        document.getElementById('start-drawing-area').addEventListener('click', (e) => { e.stopPropagation(); dom.p1.style.opacity = '0'; dom.p1.style.pointerEvents = 'none'; setTimeout(() => { startDrawingPhase(); }, 100); });  
   
         dom.followUpInput.addEventListener('input', function() { this.style.height = '48px'; this.style.height = (this.scrollHeight) + 'px'; });  
   
