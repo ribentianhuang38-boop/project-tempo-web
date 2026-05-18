@@ -260,7 +260,20 @@
         // ===== Supabase 初始化 =====
         const SUPABASE_URL = 'https://epquctnhooglwexzwjtw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_j8rdkKfqdC2ULy2NuZQm_A_lfgboq73';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let supabase = null;
+        try {
+            if (window.supabase && window.supabase.createClient) {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch(e) { console.warn('Supabase SDK 加载失败，离线模式:', e); }
+        // 兜底：如果 supabase 为 null，提供空操作对象防止后续代码报错
+        if (!supabase) {
+            const noop = async () => ({ data: { user: null, session: null }, error: null });
+            supabase = {
+                auth: { getSession: noop, getUser: noop, signInWithPassword: noop, signUp: noop, signOut: async () => {} },
+                from: () => ({ select: () => ({ eq: () => ({ single: noop, limit: () => ({ order: noop }) }), order: () => ({ limit: () => ({ eq: noop }) }) }), insert: () => noop, update: () => ({ eq: () => noop }), upsert: () => noop })
+            };
+        }
 
         if (window.Telegram && window.Telegram.WebApp) { const tg = window.Telegram.WebApp; tg.ready(); tg.expand(); tg.setHeaderColor('#000000'); tg.setBackgroundColor('#000000'); }
         let userId = null; let userName = "未知探索者";
