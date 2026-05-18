@@ -652,7 +652,7 @@
         }  
   
         let carouselRotation = 0, targetRotation = 0; let availableCards = [], spreadCards = [], movingCards = [];  
-        function startDrawingPhase() { if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); } appPhase = 'drawing'; spreadCards = []; movingCards = []; particles = []; coreEnergy = 0; coreRadius = 0; carouselRotation = 0; targetRotation = 0; let shuffledDict = [...TAROT_DICT].sort(() => Math.random() - 0.5); availableCards = Array.from({length: 22}, (_, i) => ({ id: i, selected: false, tarotData: shuffledDict[i] })); }  
+        function startDrawingPhase() { dom.p1.style.pointerEvents = 'none'; if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); } appPhase = 'drawing'; spreadCards = []; movingCards = []; particles = []; coreEnergy = 0; coreRadius = 0; carouselRotation = 0; targetRotation = 0; let shuffledDict = [...TAROT_DICT].sort(() => Math.random() - 0.5); availableCards = Array.from({length: 22}, (_, i) => ({ id: i, selected: false, tarotData: shuffledDict[i] })); }  
         function startSpiritCarousel() { appPhase = 'spirit_carousel'; carouselRotation = 0; targetRotation = 0; availableCards = TAROT_DICT.slice(0, 22).map((tarotData, i) => ({ id: i, selected: false, tarotData: tarotData })); }  
           
         function getSlotCoords(index, isExpanded) {   
