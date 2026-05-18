@@ -811,16 +811,16 @@
             const loginPage = document.getElementById('login-page');
             const page1 = document.getElementById('page-1');
 
-            // 先检查 Supabase session
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                localStorage.setItem('tarot_auth_token', session.access_token);
+            // 1) Telegram 环境：立即自动登录，不等 Supabase
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
                 page1.style.opacity = '1'; page1.style.pointerEvents = 'auto';
                 loginPage.classList.add('hidden-login');
+                // 后台静默同步 Supabase（不阻塞 UI）
+                telegramLogin().catch(() => {});
                 return;
             }
 
-            // 检查本地 token
+            // 2) 本地 token：立即放行
             const stored = localStorage.getItem('tarot_auth_token');
             if (stored) {
                 page1.style.opacity = '1'; page1.style.pointerEvents = 'auto';
@@ -828,13 +828,20 @@
                 return;
             }
 
-            // Telegram 环境自动登录
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                await telegramLogin();
-                return;
-            }
+            // 3) 尝试 Supabase session（加超时保护）
+            try {
+                const sessionPromise = supabase.auth.getSession();
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000));
+                const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
+                if (session) {
+                    localStorage.setItem('tarot_auth_token', session.access_token);
+                    page1.style.opacity = '1'; page1.style.pointerEvents = 'auto';
+                    loginPage.classList.add('hidden-login');
+                    return;
+                }
+            } catch(e) { console.warn('Supabase session 检查超时或失败:', e.message); }
 
-            // 显示登录页
+            // 4) 什么都没有：显示登录页
             page1.style.opacity = '0'; page1.style.pointerEvents = 'none';
             loginPage.classList.remove('hidden-login');
         }
