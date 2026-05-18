@@ -320,9 +320,29 @@
             if (savedSpiritId !== null) {  
                 mySpiritCard = TAROT_DICT.find(c => c.id === parseInt(savedSpiritId)) || null;  
             }  
-        } catch(e) { console.warn("Storage access restricted."); }  
-  
-        // ================= 加载图片资源 =================  
+        } catch(e) { console.warn("Storage access restricted."); }
+
+        // 数据库牌灵加载（跨设备持久化）
+        (async () => {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const { data: profile } = await supabase.from('profiles')
+                        .select('spirit_card_id')
+                        .eq('id', user.id)
+                        .single();
+                    if (profile && profile.spirit_card_id !== null) {
+                        const dbCard = TAROT_DICT.find(c => c.id === profile.spirit_card_id);
+                        if (dbCard) {
+                            mySpiritCard = dbCard;
+                            try { localStorage.setItem('tarot_spirit_id', dbCard.id); } catch(e) {}
+                        }
+                    }
+                }
+            } catch(e) { console.warn('牌灵数据库同步跳过'); }
+        })();
+
+        // ================= 加载图片资源 =================
         const imageCache = {};  
         const fallbackImg = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80";   
           
@@ -646,11 +666,11 @@
                 spreadCards.forEach((sc, i) => { const coords = getSlotCoords(i, true); if (sc.flipProgress === 0 && Math.abs(x - coords.x) < CARD_WIDTH && Math.abs(y - coords.y) < CARD_HEIGHT) sc.isFlipping = true; });  
             } else if (appPhase === 'spirit_intro') {  
                 const cx = width / 2, cy = height / 2 - 40;   
-                if (Math.abs(x - cx) < CARD_WIDTH && Math.abs(y - cy) < CARD_HEIGHT) { if (!mySpiritCard) { mySpiritCard = TAROT_DICT[Math.floor(Math.random() * 22)]; try{ localStorage.setItem('tarot_spirit_id', mySpiritCard.id); }catch(e){} appPhase = 'spirit_revealing'; for(let i=0; i<80; i++) particles.push(new LightParticle(cx, cy, true)); } }  
+                if (Math.abs(x - cx) < CARD_WIDTH && Math.abs(y - cy) < CARD_HEIGHT) { if (!mySpiritCard) { mySpiritCard = TAROT_DICT[Math.floor(Math.random() * 22)]; try{ localStorage.setItem('tarot_spirit_id', mySpiritCard.id); syncSpiritCard(mySpiritCard.id); }catch(e){} appPhase = 'spirit_revealing'; for(let i=0; i<80; i++) particles.push(new LightParticle(cx, cy, true)); } }  
             } else if (appPhase === 'spirit_carousel') {  
                 if (Date.now() - lastDrawTime < 500) return;  
                 const renderedCards = getRenderedCarouselCards(true);  
-                for (let i = renderedCards.length - 1; i >= 0; i--) { const c = renderedCards[i]; if (x > c.x - (CARD_WIDTH*c.scale)/2 && x < c.x + (CARD_WIDTH*c.scale)/2 && y > c.y - (CARD_HEIGHT*c.scale)/2 && y < c.y + (CARD_HEIGHT*c.scale)/2) { lastDrawTime = Date.now(); mySpiritCard = c.tarotData; try{ localStorage.setItem('tarot_spirit_id', mySpiritCard.id); }catch(e){} appPhase = 'spirit_revealing'; for(let k=0; k<80; k++) particles.push(new LightParticle(width/2, height/2 - 40, true)); break; } }  
+                for (let i = renderedCards.length - 1; i >= 0; i--) { const c = renderedCards[i]; if (x > c.x - (CARD_WIDTH*c.scale)/2 && x < c.x + (CARD_WIDTH*c.scale)/2 && y > c.y - (CARD_HEIGHT*c.scale)/2 && y < c.y + (CARD_HEIGHT*c.scale)/2) { lastDrawTime = Date.now(); mySpiritCard = c.tarotData; try{ localStorage.setItem('tarot_spirit_id', mySpiritCard.id); syncSpiritCard(mySpiritCard.id); }catch(e){} appPhase = 'spirit_revealing'; for(let k=0; k<80; k++) particles.push(new LightParticle(width/2, height/2 - 40, true)); break; } }  
             }  
         }  
   
@@ -871,6 +891,15 @@
                 cards_drawn: cardsJson, ai_interpretation: aiResponse
             }]);
             if (error) console.error('星轨刻印失败:', error);
+        }
+
+        async function syncSpiritCard(cardId) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const { error } = await supabase.from('profiles')
+                .update({ spirit_card_id: cardId })
+                .eq('id', user.id);
+            if (error) console.error('牌灵同步失败:', error);
         }
 
         function transitionToApp() {
