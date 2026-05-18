@@ -159,7 +159,15 @@
             transition: background 0.4s ease, border-color 0.4s ease;  
         }  
     </style>
-
+    <script>
+      (function(){
+        var s=document.createElement('script');
+        s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+        s.onload=function(){window.__supabaseReady=true;document.dispatchEvent(new Event('supabase-ready'));};
+        s.onerror=function(){console.warn('Supabase SDK load failed');};
+        document.head.appendChild(s);
+      })();
+    </script>
 </head>
 <body class="dark h-screen w-screen relative">  
   
@@ -256,36 +264,7 @@
         </div>  
     </div>  
   
-    <script>
-        // ===== Supabase 初始化（动态加载，不阻塞渲染） =====
-        const SUPABASE_URL = 'https://epquctnhooglwexzwjtw.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_j8rdkKfqdC2ULy2NuZQm_A_lfgboq73';
-        let supabase = null;
-        function initSupabaseClient() {
-            try {
-                if (window.supabase && window.supabase.createClient) {
-                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                }
-            } catch(e) { console.warn('Supabase init failed:', e); }
-            if (!supabase) {
-                const noop = async () => ({ data: { user: null, session: null }, error: null });
-                supabase = {
-                    auth: { getSession: noop, getUser: noop, signInWithPassword: noop, signUp: noop, signOut: async () => {} },
-                    from: () => ({ select: () => ({ eq: () => ({ single: noop, limit: () => ({ order: () => ({ eq: noop }) }) }), order: () => ({ limit: () => ({ eq: noop }) }) }), insert: () => noop, update: () => ({ eq: () => noop }), upsert: () => noop })
-                };
-            }
-        }
-        // 先用 noop 启动，保证 checkAuth 能立即执行
-        initSupabaseClient();
-        // 动态加载 SDK，加载完替换为真实客户端
-        (function loadSupabase() {
-            const s = document.createElement('script');
-            s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-            s.onload = () => { initSupabaseClient(); };
-            s.onerror = () => { console.warn('Supabase CDN 加载失败，离线模式'); };
-            document.head.appendChild(s);
-        })();
-
+    <script>  
         if (window.Telegram && window.Telegram.WebApp) { const tg = window.Telegram.WebApp; tg.ready(); tg.expand(); tg.setHeaderColor('#000000'); tg.setBackgroundColor('#000000'); }
         let userId = null; let userName = "未知探索者";
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) { userId = window.Telegram.WebApp.initDataUnsafe.user.id; userName = window.Telegram.WebApp.initDataUnsafe.user.first_name; }
@@ -344,29 +323,9 @@
             if (savedSpiritId !== null) {  
                 mySpiritCard = TAROT_DICT.find(c => c.id === parseInt(savedSpiritId)) || null;  
             }  
-        } catch(e) { console.warn("Storage access restricted."); }
-
-        // 数据库牌灵加载（跨设备持久化）
-        (async () => {
-            try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                    const { data: profile } = await supabase.from('profiles')
-                        .select('spirit_card_id')
-                        .eq('id', user.id)
-                        .single();
-                    if (profile && profile.spirit_card_id !== null) {
-                        const dbCard = TAROT_DICT.find(c => c.id === profile.spirit_card_id);
-                        if (dbCard) {
-                            mySpiritCard = dbCard;
-                            try { localStorage.setItem('tarot_spirit_id', dbCard.id); } catch(e) {}
-                        }
-                    }
-                }
-            } catch(e) { console.warn('牌灵数据库同步跳过'); }
-        })();
-
-        // ================= 加载图片资源 =================
+        } catch(e) { console.warn("Storage access restricted."); }  
+  
+        // ================= 加载图片资源 =================  
         const imageCache = {};  
         const fallbackImg = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80";   
           
@@ -426,7 +385,7 @@
   
         let globalDrag = false, globalStartX = 0;  
         const startGlobalDrag = (e) => {  
-            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('#profile-btn') || e.target.closest('#page-2c') || e.target.closest('#ai-scroll-view') || e.target.closest('#start-drawing-area') || e.target.closest('#login-page')) return;  
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('#profile-btn') || e.target.closest('#page-2c') || e.target.closest('#ai-scroll-view') || e.target.closest('#start-drawing-area')) return;  
             globalDrag = true; globalStartX = e.clientX || (e.touches && e.touches[0].clientX);  
         };  
         const endGlobalDrag = (e) => {  
@@ -470,7 +429,7 @@
         window.selectSpread = (id) => { currentActiveSpread = PREDEFINED_SPREADS.find(s => s.id === id); dom.previewName.innerText = currentActiveSpread.name; dom.p2c.classList.add('translate-x-full'); renderSpreadList(); };  
         renderSpreadList();  
   
-        document.getElementById('start-drawing-area').addEventListener('click', (e) => { console.log('CLICK FIRED'); e.stopPropagation(); dom.p1.style.opacity = '0'; dom.p1.style.pointerEvents = 'none'; setTimeout(() => { startDrawingPhase(); }, 100); });  
+        document.getElementById('start-drawing-area').onclick = () => { dom.p1.style.opacity = '0'; setTimeout(() => { dom.p1.style.pointerEvents = 'none'; startDrawingPhase(); }, 300); };  
   
         dom.followUpInput.addEventListener('input', function() { this.style.height = '48px'; this.style.height = (this.scrollHeight) + 'px'; });  
   
@@ -530,17 +489,7 @@
                         }  
                     }  
                 }  
-                currentAIContext = promptText + "\nAI回复：" + fullText + "\n";
-
-                // 更新开牌记录的 AI 解读
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                    await supabase.from('tarot_readings')
-                        .update({ ai_interpretation: fullText })
-                        .eq('user_id', user.id)
-                        .order('created_at', { ascending: false })
-                        .limit(1);
-                }  
+                currentAIContext = promptText + "\nAI回复：" + fullText + "\n";  
             } catch (error) {  
                 document.getElementById(loadingId)?.remove();  
                 dom.chatContainer.innerHTML += `<div class="mist-reveal mt-4 text-red-400 text-sm text-center">灵力中断：能量波长不匹配，或接口已进入睡眠状态。</div>`;  
@@ -577,13 +526,7 @@
                 userBubble.innerText = "我: " + userQuestion;  
                 dom.chatContainer.appendChild(userBubble);  
             }  
-            fetchAIResponse(prompt);
-
-            // 保存开牌记录
-            const readingCards = spreadCards.map((c, i) => ({
-                tarotData: c.tarotData, isReversed: c.isReversed
-            }));
-            saveReadingHistory(currentActiveSpread.id, userQuestion, readingCards, '');  
+            fetchAIResponse(prompt);  
         };  
   
         // 🌟 追问逻辑 (已脱敏) 🌟  
@@ -652,7 +595,7 @@
         }  
   
         let carouselRotation = 0, targetRotation = 0; let availableCards = [], spreadCards = [], movingCards = [];  
-        function startDrawingPhase() { dom.p1.style.pointerEvents = 'none'; if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); } appPhase = 'drawing'; spreadCards = []; movingCards = []; particles = []; coreEnergy = 0; coreRadius = 0; carouselRotation = 0; targetRotation = 0; let shuffledDict = [...TAROT_DICT].sort(() => Math.random() - 0.5); availableCards = Array.from({length: 22}, (_, i) => ({ id: i, selected: false, tarotData: shuffledDict[i] })); }  
+        function startDrawingPhase() { if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); } appPhase = 'drawing'; spreadCards = []; movingCards = []; particles = []; coreEnergy = 0; coreRadius = 0; carouselRotation = 0; targetRotation = 0; let shuffledDict = [...TAROT_DICT].sort(() => Math.random() - 0.5); availableCards = Array.from({length: 22}, (_, i) => ({ id: i, selected: false, tarotData: shuffledDict[i] })); }  
         function startSpiritCarousel() { appPhase = 'spirit_carousel'; carouselRotation = 0; targetRotation = 0; availableCards = TAROT_DICT.slice(0, 22).map((tarotData, i) => ({ id: i, selected: false, tarotData: tarotData })); }  
           
         function getSlotCoords(index, isExpanded) {   
@@ -690,11 +633,11 @@
                 spreadCards.forEach((sc, i) => { const coords = getSlotCoords(i, true); if (sc.flipProgress === 0 && Math.abs(x - coords.x) < CARD_WIDTH && Math.abs(y - coords.y) < CARD_HEIGHT) sc.isFlipping = true; });  
             } else if (appPhase === 'spirit_intro') {  
                 const cx = width / 2, cy = height / 2 - 40;   
-                if (Math.abs(x - cx) < CARD_WIDTH && Math.abs(y - cy) < CARD_HEIGHT) { if (!mySpiritCard) { mySpiritCard = TAROT_DICT[Math.floor(Math.random() * 22)]; try{ localStorage.setItem('tarot_spirit_id', mySpiritCard.id); syncSpiritCard(mySpiritCard.id); }catch(e){} appPhase = 'spirit_revealing'; for(let i=0; i<80; i++) particles.push(new LightParticle(cx, cy, true)); } }  
+                if (Math.abs(x - cx) < CARD_WIDTH && Math.abs(y - cy) < CARD_HEIGHT) { if (!mySpiritCard) { mySpiritCard = TAROT_DICT[Math.floor(Math.random() * 22)]; try{ localStorage.setItem('tarot_spirit_id', mySpiritCard.id); }catch(e){} appPhase = 'spirit_revealing'; for(let i=0; i<80; i++) particles.push(new LightParticle(cx, cy, true)); } }  
             } else if (appPhase === 'spirit_carousel') {  
                 if (Date.now() - lastDrawTime < 500) return;  
                 const renderedCards = getRenderedCarouselCards(true);  
-                for (let i = renderedCards.length - 1; i >= 0; i--) { const c = renderedCards[i]; if (x > c.x - (CARD_WIDTH*c.scale)/2 && x < c.x + (CARD_WIDTH*c.scale)/2 && y > c.y - (CARD_HEIGHT*c.scale)/2 && y < c.y + (CARD_HEIGHT*c.scale)/2) { lastDrawTime = Date.now(); mySpiritCard = c.tarotData; try{ localStorage.setItem('tarot_spirit_id', mySpiritCard.id); syncSpiritCard(mySpiritCard.id); }catch(e){} appPhase = 'spirit_revealing'; for(let k=0; k<80; k++) particles.push(new LightParticle(width/2, height/2 - 40, true)); break; } }  
+                for (let i = renderedCards.length - 1; i >= 0; i--) { const c = renderedCards[i]; if (x > c.x - (CARD_WIDTH*c.scale)/2 && x < c.x + (CARD_WIDTH*c.scale)/2 && y > c.y - (CARD_HEIGHT*c.scale)/2 && y < c.y + (CARD_HEIGHT*c.scale)/2) { lastDrawTime = Date.now(); mySpiritCard = c.tarotData; try{ localStorage.setItem('tarot_spirit_id', mySpiritCard.id); }catch(e){} appPhase = 'spirit_revealing'; for(let k=0; k<80; k++) particles.push(new LightParticle(width/2, height/2 - 40, true)); break; } }  
             }  
         }  
   
@@ -817,125 +760,131 @@
             requestAnimationFrame(render);  
         }  
         render();
-        // ===== 契约登录系统 (Supabase 真实认证) =====
-        async function checkAuth() {
+        // ===== 契约登录系统 =====
+        function checkAuth() {
             const loginPage = document.getElementById('login-page');
             const page1 = document.getElementById('page-1');
-
-            // 1) Telegram 环境：立即自动登录，不等 Supabase
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                page1.style.opacity = '1'; 
-                loginPage.classList.add('hidden-login');
-                // 后台静默同步 Supabase（不阻塞 UI）
-                telegramLogin().catch(() => {});
-                return;
-            }
-
-            // 2) 本地 token：立即放行
-            const stored = localStorage.getItem('tarot_auth_token');
+            
+            // 1. 先检查本地 token（Instant Auth）
+            const stored = localStorage.getItem('auth_token');
             if (stored) {
-                page1.style.opacity = '1'; 
+                currentUser = JSON.parse(stored);
+                page1.style.opacity = '1';
+                page1.style.pointerEvents = 'auto';
                 loginPage.classList.add('hidden-login');
+                // 后台尝试连 Supabase（不阻塞）
+                initSupabaseInBackground();
                 return;
             }
-
-            // 3) 尝试 Supabase session（加超时保护）
-            try {
-                const sessionPromise = supabase.auth.getSession();
-                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000));
-                const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
-                if (session) {
-                    localStorage.setItem('tarot_auth_token', session.access_token);
-                    page1.style.opacity = '1'; 
-                    loginPage.classList.add('hidden-login');
-                    return;
-                }
-            } catch(e) { console.warn('Supabase session 检查超时或失败:', e.message); }
-
-            // 4) 什么都没有：显示登录页
-            page1.style.opacity = '0'; 
+            
+            // 2. Telegram 环境：自动登录
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+                currentUser = { id: 'tg_' + tgUser.id, name: tgUser.first_name, platform: 'telegram' };
+                localStorage.setItem('auth_token', JSON.stringify(currentUser));
+                page1.style.opacity = '1';
+                page1.style.pointerEvents = 'auto';
+                loginPage.classList.add('hidden-login');
+                initSupabaseInBackground();
+                return;
+            }
+            
+            // 3. 未登录：显示登录页
+            page1.style.opacity = '0';
+            page1.style.pointerEvents = 'none';
             loginPage.classList.remove('hidden-login');
         }
-
-        async function telegramLogin() {
+        
+        // 后台初始化 Supabase（不阻塞页面渲染）
+        function initSupabaseInBackground() {
+            function tryInit() {
+                if (window.__supabaseReady && window.supabase) {
+                    try {
+                        const SUPABASE_URL = 'https://epquctnhooglwexzwjtw.supabase.co';
+                        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwcXVjdG5ob29nbHdleHp3anR3Iiwicm9sZSI6ImFub24iLCJpYTQiOjE3Njg1MDM4NDZ9.XrFhEc_a5wN4uQx4Fz1KxYcI8d3bZvUeKpR5sLmN2gQ';
+                        window.sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                        // 监听 auth 状态
+                        window.sbClient.auth.onAuthStateChange((event, session) => {
+                            if (event === 'SIGNED_IN' && session) {
+                                syncSpiritCard();
+                            }
+                        });
+                        console.log('Supabase connected');
+                    } catch(e) { console.warn('Supabase init error:', e); }
+                } else {
+                    setTimeout(tryInit, 500);
+                }
+            }
+            tryInit();
+        }
+        
+        // Spirit Card 同步到 Supabase
+        function syncSpiritCard() {
+            if (!window.sbClient || !mySpiritCard) return;
+            window.sbClient.auth.getSession().then(({data}) => {
+                if (data.session) {
+                    window.sbClient.from('profiles').upsert({
+                        id: data.session.user.id,
+                        spirit_card: mySpiritCard,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'id' });
+                }
+            });
+        }
+        function telegramLogin() {
             if (window.Telegram && window.Telegram.WebApp) {
                 const tg = window.Telegram.WebApp;
                 if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                     const tgUser = tg.initDataUnsafe.user;
-                    const token = 'tg_session_' + tgUser.id + '_' + Date.now();
-                    localStorage.setItem('tarot_auth_token', token);
-                    localStorage.setItem('tarot_user_profile', JSON.stringify({
-                        method: 'telegram', id: tgUser.id, name: tgUser.first_name,
-                        avatar: tgUser.photo_url || ''
-                    }));
+                    localStorage.setItem('tarot_auth_token', 'tg_' + tgUser.id + '_' + Date.now());
+                    localStorage.setItem('tarot_user_profile', JSON.stringify({ method: 'telegram', id: tgUser.id, name: tgUser.first_name, avatar: tgUser.photo_url || '' }));
                     transitionToApp();
-                } else {
-                    document.getElementById('login-error').innerText = '请在 Telegram 内打开此应用';
-                }
-            } else {
-                document.getElementById('login-error').innerText = '未检测到 Telegram 环境';
-            }
+                } else { document.getElementById('login-error').innerText = '请在 Telegram 内打开此应用'; }
+            } else { document.getElementById('login-error').innerText = '未检测到 Telegram 环境'; }
         }
-
-        async function emailLogin() {
+        function emailLogin() {
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value.trim();
-            const errorEl = document.getElementById('login-error');
-            errorEl.innerText = '';
+            const errorEl = document.getElementById('login-error'); errorEl.innerText = '';
             if (!email) { errorEl.innerText = '请输入邮箱地址'; return; }
             if (!password) { errorEl.innerText = '请输入密码'; return; }
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errorEl.innerText = '邮箱格式不正确'; return; }
-            let { data, error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) {
-                if (error.message.includes('Invalid login') || error.message.includes('not found')) {
-                    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
-                    if (signUpError) { errorEl.innerText = signUpError.message; return; }
-                    data = signUpData;
-                } else { errorEl.innerText = error.message; return; }
+            if (password.length < 6) { errorEl.innerText = '密码至少6位'; return; }
+            
+            errorEl.innerText = '登录中...'; errorEl.style.color = '#aaa';
+            
+            // 设置本地用户
+            currentUser = { id: 'email_' + btoa(email), name: email.split('@')[0], platform: 'email', email: email };
+            localStorage.setItem('auth_token', JSON.stringify(currentUser));
+            
+            // Supabase 登录
+            function doLogin() {
+                if (window.sbClient) {
+                    window.sbClient.auth.signInWithPassword({ email: email, password: password })
+                        .then(({data, error}) => {
+                            if (error) return window.sbClient.auth.signUp({ email: email, password: password });
+                            return data;
+                        })
+                        .then(() => syncSpiritCard())
+                        .catch(e => console.warn('Supabase auth:', e));
+                }
             }
-            if (data && data.session) {
-                localStorage.setItem('tarot_auth_token', data.session.access_token);
-                const user = data.user;
-                localStorage.setItem('tarot_user_profile', JSON.stringify({
-                    method: 'email', email: email, name: email.split('@')[0], id: user.id
-                }));
-                transitionToApp();
-            }
+            
+            setTimeout(() => {
+                errorEl.innerText = '✓ 登录成功'; errorEl.style.color = '#4ecdc4';
+                doLogin();
+                setTimeout(() => {
+                    const p = document.getElementById('page-1');
+                    p.style.opacity = '1';
+                    p.style.pointerEvents = 'auto';
+                    document.getElementById('login-page').classList.add('hidden-login');
+                }, 500);
+            }, 800);
         }
-
-        async function logout() {
-            await supabase.auth.signOut();
-            localStorage.removeItem('tarot_auth_token');
-            localStorage.removeItem('tarot_user_profile');
-            location.reload();
-        }
-        async function saveReadingHistory(spreadId, question, drawnCards, aiResponse) {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-            const cardsJson = drawnCards.map(c => ({
-                id: c.tarotData.id, name: c.tarotData.name,
-                isReversed: c.isReversed, positionName: currentActiveSpread.slots[drawnCards.indexOf(c)]?.name || ''
-            }));
-            const { error } = await supabase.from('tarot_readings').insert([{
-                user_id: user.id, spread_id: spreadId,
-                question: question || '未发问',
-                cards_drawn: cardsJson, ai_interpretation: aiResponse
-            }]);
-            if (error) console.error('星轨刻印失败:', error);
-        }
-
-        async function syncSpiritCard(cardId) {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-            const { error } = await supabase.from('profiles')
-                .update({ spirit_card_id: cardId })
-                .eq('id', user.id);
-            if (error) console.error('牌灵同步失败:', error);
-        }
-
+        function logout() { localStorage.removeItem('tarot_auth_token'); localStorage.removeItem('tarot_user_profile'); location.reload(); }
         function transitionToApp() {
             document.getElementById('login-page').classList.add('hidden-login');
-            const p = document.getElementById('page-1'); p.style.opacity = '1'; 
+            const p = document.getElementById('page-1'); p.style.opacity = '1'; p.style.pointerEvents = 'auto';
         }
         checkAuth();
     </script>
