@@ -158,8 +158,9 @@
             border-radius: 18px 18px 18px 4px;  
             transition: background 0.4s ease, border-color 0.4s ease;  
         }  
-    </style>  
-</head>  
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
 <body class="dark h-screen w-screen relative">  
   
     <canvas id="tarotCanvas"></canvas>
@@ -255,7 +256,12 @@
         </div>  
     </div>  
   
-    <script>  
+    <script>
+        // ===== Supabase 初始化 =====
+        const SUPABASE_URL = 'https://ykwdvyoqjktfkrtmijmm.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_Zrpj6IyIlOjmWnST0Prw5w_32ytNni_';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         if (window.Telegram && window.Telegram.WebApp) { const tg = window.Telegram.WebApp; tg.ready(); tg.expand(); tg.setHeaderColor('#000000'); tg.setBackgroundColor('#000000'); }
         let userId = null; let userName = "未知探索者";
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) { userId = window.Telegram.WebApp.initDataUnsafe.user.id; userName = window.Telegram.WebApp.initDataUnsafe.user.first_name; }
@@ -751,46 +757,123 @@
             requestAnimationFrame(render);  
         }  
         render();
-        // ===== 契约登录系统 =====
-        function checkAuth() {
+        // ===== 契约登录系统 (Supabase 真实认证) =====
+        async function checkAuth() {
             const loginPage = document.getElementById('login-page');
             const page1 = document.getElementById('page-1');
-            const stored = localStorage.getItem('tarot_auth_token');
-            if (stored) { page1.style.opacity = '1'; page1.style.pointerEvents = 'auto'; loginPage.classList.add('hidden-login'); return; }
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-                const token = 'tg_' + tgUser.id + '_' + Date.now();
-                const profile = { method: 'telegram', id: tgUser.id, name: tgUser.first_name, avatar: tgUser.photo_url || '' };
-                localStorage.setItem('tarot_auth_token', token);
-                localStorage.setItem('tarot_user_profile', JSON.stringify(profile));
-                page1.style.opacity = '1'; page1.style.pointerEvents = 'auto'; loginPage.classList.add('hidden-login'); return;
+
+            // 先检查 Supabase session
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                localStorage.setItem('tarot_auth_token', session.access_token);
+                page1.style.opacity = '1'; page1.style.pointerEvents = 'auto';
+                loginPage.classList.add('hidden-login');
+                return;
             }
-            page1.style.opacity = '0'; page1.style.pointerEvents = 'none'; loginPage.classList.remove('hidden-login');
+
+            // 检查本地 token
+            const stored = localStorage.getItem('tarot_auth_token');
+            if (stored) {
+                page1.style.opacity = '1'; page1.style.pointerEvents = 'auto';
+                loginPage.classList.add('hidden-login');
+                return;
+            }
+
+            // Telegram 环境自动登录
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                await telegramLogin();
+                return;
+            }
+
+            // 显示登录页
+            page1.style.opacity = '0'; page1.style.pointerEvents = 'none';
+            loginPage.classList.remove('hidden-login');
         }
-        function telegramLogin() {
+
+        async function telegramLogin() {
             if (window.Telegram && window.Telegram.WebApp) {
                 const tg = window.Telegram.WebApp;
                 if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                     const tgUser = tg.initDataUnsafe.user;
-                    localStorage.setItem('tarot_auth_token', 'tg_' + tgUser.id + '_' + Date.now());
-                    localStorage.setItem('tarot_user_profile', JSON.stringify({ method: 'telegram', id: tgUser.id, name: tgUser.first_name, avatar: tgUser.photo_url || '' }));
-                    transitionToApp();
-                } else { document.getElementById('login-error').innerText = '请在 Telegram 内打开此应用'; }
-            } else { document.getElementById('login-error').innerText = '未检测到 Telegram 环境'; }
+                    // 尝试 Supabase OTP
+                    const { data, error } = await supabase.auth.signInWithOtp({
+                        phone: tgUser.phone_number || null,
+                    });
+                    // 如果 OTP 不可用，用 fallback 方式
+                    if (error) {
+                        const fallbackId = 'tg_' + tgUser.id;
+                        const { error: dbError } = await supabase.from('users').upsert({
+                            id: crypto.randomUUID(),
+                            auth_provider: 'telegram',
+                            provider_id: String(tgUser.id),
+                            display_name: tgUser.first_name,
+                            avatar_url: tgUser.photo_url || null,
+                            last_login: new Date().toISOString()
+                        }, { onConflict: 'auth_provider,provider_id' });
+                        localStorage.setItem('tarot_auth_token', 'tg_session_' + Date.now());
+                        localStorage.setItem('tarot_user_profile', JSON.stringify({
+                            method: 'telegram', id: tgUser.id, name: tgUser.first_name,
+                            avatar: tgUser.photo_url || ''
+                        }));
+                        transitionToApp();
+                        return;
+                    }
+                    if (data && data.session) {
+                        localStorage.setItem('tarot_auth_token', data.session.access_token);
+                        transitionToApp();
+                    }
+                } else {
+                    document.getElementById('login-error').innerText = '请在 Telegram 内打开此应用';
+                }
+            } else {
+                document.getElementById('login-error').innerText = '未检测到 Telegram 环境';
+            }
         }
-        function emailLogin() {
+
+        async function emailLogin() {
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value.trim();
-            const errorEl = document.getElementById('login-error'); errorEl.innerText = '';
+            const errorEl = document.getElementById('login-error');
+            errorEl.innerText = '';
             if (!email) { errorEl.innerText = '请输入邮箱地址'; return; }
             if (!password) { errorEl.innerText = '请输入密码'; return; }
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errorEl.innerText = '邮箱格式不正确'; return; }
-            if (password.length < 6) { errorEl.innerText = '密码至少6位'; return; }
-            localStorage.setItem('tarot_auth_token', 'email_' + btoa(email) + '_' + Date.now());
-            localStorage.setItem('tarot_user_profile', JSON.stringify({ method: 'email', email: email, name: email.split('@')[0] }));
-            transitionToApp();
+
+            // 先尝试登录
+            let { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                // 如果用户不存在，自动注册
+                if (error.message.includes('Invalid login') || error.message.includes('not found')) {
+                    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
+                    if (signUpError) { errorEl.innerText = signUpError.message; return; }
+                    data = signUpData;
+                } else {
+                    errorEl.innerText = error.message; return;
+                }
+            }
+            // 写入 users 表
+            if (data && data.user) {
+                await supabase.from('users').upsert({
+                    id: data.user.id,
+                    auth_provider: 'email',
+                    provider_id: email,
+                    display_name: email.split('@')[0],
+                    last_login: new Date().toISOString()
+                }, { onConflict: 'id' });
+                localStorage.setItem('tarot_auth_token', data.session.access_token);
+                localStorage.setItem('tarot_user_profile', JSON.stringify({
+                    method: 'email', email: email, name: email.split('@')[0], id: data.user.id
+                }));
+                transitionToApp();
+            }
         }
-        function logout() { localStorage.removeItem('tarot_auth_token'); localStorage.removeItem('tarot_user_profile'); location.reload(); }
+
+        async function logout() {
+            await supabase.auth.signOut();
+            localStorage.removeItem('tarot_auth_token');
+            localStorage.removeItem('tarot_user_profile');
+            location.reload();
+        }
         function transitionToApp() {
             document.getElementById('login-page').classList.add('hidden-login');
             const p = document.getElementById('page-1'); p.style.opacity = '1'; p.style.pointerEvents = 'auto';
