@@ -159,7 +159,7 @@
             transition: background 0.4s ease, border-color 0.4s ease;  
         }  
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 </head>
 <body class="dark h-screen w-screen relative">  
   
@@ -257,23 +257,34 @@
     </div>  
   
     <script>
-        // ===== Supabase 初始化 =====
+        // ===== Supabase 初始化（动态加载，不阻塞渲染） =====
         const SUPABASE_URL = 'https://epquctnhooglwexzwjtw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_j8rdkKfqdC2ULy2NuZQm_A_lfgboq73';
         let supabase = null;
-        try {
-            if (window.supabase && window.supabase.createClient) {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        function initSupabaseClient() {
+            try {
+                if (window.supabase && window.supabase.createClient) {
+                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                }
+            } catch(e) { console.warn('Supabase init failed:', e); }
+            if (!supabase) {
+                const noop = async () => ({ data: { user: null, session: null }, error: null });
+                supabase = {
+                    auth: { getSession: noop, getUser: noop, signInWithPassword: noop, signUp: noop, signOut: async () => {} },
+                    from: () => ({ select: () => ({ eq: () => ({ single: noop, limit: () => ({ order: () => ({ eq: noop }) }) }), order: () => ({ limit: () => ({ eq: noop }) }) }), insert: () => noop, update: () => ({ eq: () => noop }), upsert: () => noop })
+                };
             }
-        } catch(e) { console.warn('Supabase SDK 加载失败，离线模式:', e); }
-        // 兜底：如果 supabase 为 null，提供空操作对象防止后续代码报错
-        if (!supabase) {
-            const noop = async () => ({ data: { user: null, session: null }, error: null });
-            supabase = {
-                auth: { getSession: noop, getUser: noop, signInWithPassword: noop, signUp: noop, signOut: async () => {} },
-                from: () => ({ select: () => ({ eq: () => ({ single: noop, limit: () => ({ order: noop }) }), order: () => ({ limit: () => ({ eq: noop }) }) }), insert: () => noop, update: () => ({ eq: () => noop }), upsert: () => noop })
-            };
         }
+        // 先用 noop 启动，保证 checkAuth 能立即执行
+        initSupabaseClient();
+        // 动态加载 SDK，加载完替换为真实客户端
+        (function loadSupabase() {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+            s.onload = () => { initSupabaseClient(); };
+            s.onerror = () => { console.warn('Supabase CDN 加载失败，离线模式'); };
+            document.head.appendChild(s);
+        })();
 
         if (window.Telegram && window.Telegram.WebApp) { const tg = window.Telegram.WebApp; tg.ready(); tg.expand(); tg.setHeaderColor('#000000'); tg.setBackgroundColor('#000000'); }
         let userId = null; let userName = "未知探索者";
@@ -926,7 +937,7 @@
             document.getElementById('login-page').classList.add('hidden-login');
             const p = document.getElementById('page-1'); p.style.opacity = '1'; p.style.pointerEvents = 'auto';
         }
-        checkAuth();
+        // checkAuth() 已由 Supabase 动态加载器调用
     </script>
 </body>  
 </html>  
