@@ -486,7 +486,17 @@
                         }  
                     }  
                 }  
-                currentAIContext = promptText + "\nAI回复：" + fullText + "\n";  
+                currentAIContext = promptText + "\nAI回复：" + fullText + "\n";
+
+                // 更新开牌记录的 AI 解读
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    await supabase.from('tarot_readings')
+                        .update({ ai_interpretation: fullText })
+                        .eq('user_id', user.id)
+                        .order('created_at', { ascending: false })
+                        .limit(1);
+                }  
             } catch (error) {  
                 document.getElementById(loadingId)?.remove();  
                 dom.chatContainer.innerHTML += `<div class="mist-reveal mt-4 text-red-400 text-sm text-center">灵力中断：能量波长不匹配，或接口已进入睡眠状态。</div>`;  
@@ -523,7 +533,13 @@
                 userBubble.innerText = "我: " + userQuestion;  
                 dom.chatContainer.appendChild(userBubble);  
             }  
-            fetchAIResponse(prompt);  
+            fetchAIResponse(prompt);
+
+            // 保存开牌记录
+            const readingCards = spreadCards.map((c, i) => ({
+                tarotData: c.tarotData, isReversed: c.isReversed
+            }));
+            saveReadingHistory(currentActiveSpread.id, userQuestion, readingCards, '');  
         };  
   
         // 🌟 追问逻辑 (已脱敏) 🌟  
@@ -795,33 +811,13 @@
                 const tg = window.Telegram.WebApp;
                 if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                     const tgUser = tg.initDataUnsafe.user;
-                    // 尝试 Supabase OTP
-                    const { data, error } = await supabase.auth.signInWithOtp({
-                        phone: tgUser.phone_number || null,
-                    });
-                    // 如果 OTP 不可用，用 fallback 方式
-                    if (error) {
-                        const fallbackId = 'tg_' + tgUser.id;
-                        const { error: dbError } = await supabase.from('users').upsert({
-                            id: crypto.randomUUID(),
-                            auth_provider: 'telegram',
-                            provider_id: String(tgUser.id),
-                            display_name: tgUser.first_name,
-                            avatar_url: tgUser.photo_url || null,
-                            last_login: new Date().toISOString()
-                        }, { onConflict: 'auth_provider,provider_id' });
-                        localStorage.setItem('tarot_auth_token', 'tg_session_' + Date.now());
-                        localStorage.setItem('tarot_user_profile', JSON.stringify({
-                            method: 'telegram', id: tgUser.id, name: tgUser.first_name,
-                            avatar: tgUser.photo_url || ''
-                        }));
-                        transitionToApp();
-                        return;
-                    }
-                    if (data && data.session) {
-                        localStorage.setItem('tarot_auth_token', data.session.access_token);
-                        transitionToApp();
-                    }
+                    const token = 'tg_session_' + tgUser.id + '_' + Date.now();
+                    localStorage.setItem('tarot_auth_token', token);
+                    localStorage.setItem('tarot_user_profile', JSON.stringify({
+                        method: 'telegram', id: tgUser.id, name: tgUser.first_name,
+                        avatar: tgUser.photo_url || ''
+                    }));
+                    transitionToApp();
                 } else {
                     document.getElementById('login-error').innerText = '请在 Telegram 内打开此应用';
                 }
@@ -838,31 +834,19 @@
             if (!email) { errorEl.innerText = '请输入邮箱地址'; return; }
             if (!password) { errorEl.innerText = '请输入密码'; return; }
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errorEl.innerText = '邮箱格式不正确'; return; }
-
-            // 先尝试登录
             let { data, error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) {
-                // 如果用户不存在，自动注册
                 if (error.message.includes('Invalid login') || error.message.includes('not found')) {
                     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
                     if (signUpError) { errorEl.innerText = signUpError.message; return; }
                     data = signUpData;
-                } else {
-                    errorEl.innerText = error.message; return;
-                }
+                } else { errorEl.innerText = error.message; return; }
             }
-            // 写入 users 表
-            if (data && data.user) {
-                await supabase.from('users').upsert({
-                    id: data.user.id,
-                    auth_provider: 'email',
-                    provider_id: email,
-                    display_name: email.split('@')[0],
-                    last_login: new Date().toISOString()
-                }, { onConflict: 'id' });
+            if (data && data.session) {
                 localStorage.setItem('tarot_auth_token', data.session.access_token);
+                const user = data.user;
                 localStorage.setItem('tarot_user_profile', JSON.stringify({
-                    method: 'email', email: email, name: email.split('@')[0], id: data.user.id
+                    method: 'email', email: email, name: email.split('@')[0], id: user.id
                 }));
                 transitionToApp();
             }
@@ -874,6 +858,21 @@
             localStorage.removeItem('tarot_user_profile');
             location.reload();
         }
+        async function saveReadingHistory(spreadId, question, drawnCards, aiResponse) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const cardsJson = drawnCards.map(c => ({
+                id: c.tarotData.id, name: c.tarotData.name,
+                isReversed: c.isReversed, positionName: currentActiveSpread.slots[drawnCards.indexOf(c)]?.name || ''
+            }));
+            const { error } = await supabase.from('tarot_readings').insert([{
+                user_id: user.id, spread_id: spreadId,
+                question: question || '未发问',
+                cards_drawn: cardsJson, ai_interpretation: aiResponse
+            }]);
+            if (error) console.error('星轨刻印失败:', error);
+        }
+
         function transitionToApp() {
             document.getElementById('login-page').classList.add('hidden-login');
             const p = document.getElementById('page-1'); p.style.opacity = '1'; p.style.pointerEvents = 'auto';
