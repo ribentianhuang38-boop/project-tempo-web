@@ -761,7 +761,8 @@
                   
                 if (appPhase === 'interacting' && allFlipped && !movingCards.length && !spreadCards.some(sc => sc.isFlipping)) {   
                     appPhase = 'converging'; convergeStartTime = Date.now();   
-                    setTimeout(() => { appPhase = 'finished'; coreEnergy = 0; coreRadius = 0; particles = []; dom.decodeModule.classList.replace('btn-hidden', 'btn-reveal'); }, CONVERGE_DURATION);   
+                    setTimeout(() => { appPhase = 'finished'; coreEnergy = 0; coreRadius = 0; particles = []; dom.decodeModule.classList.    </style>
+    <script>('btn-hidden', 'btn-reveal'); }, CONVERGE_DURATION);   
                 }  
             }  
             requestAnimationFrame(render);  
