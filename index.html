@@ -160,13 +160,18 @@
         }  
     </style>
     <script>
-      (function(){
-        var s=document.createElement('script');
-        s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-        s.onload=function(){window.__supabaseReady=true;document.dispatchEvent(new Event('supabase-ready'));};
-        s.onerror=function(){console.warn('Supabase SDK load failed');};
-        document.head.appendChild(s);
-      })();
+      function loadSupabase(){
+        if(loadSupabase._p) return loadSupabase._p;
+        loadSupabase._p = new Promise(function(resolve,reject){
+          if(window.supabase){resolve(window.supabase);return;}
+          var s=document.createElement('script');
+          s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+          s.onload=function(){resolve(window.supabase);};
+          s.onerror=function(){reject('Supabase SDK load failed');};
+          document.head.appendChild(s);
+        });
+        return loadSupabase._p;
+      }
     </script>
 </head>
 <body class="dark h-screen w-screen relative">  
@@ -225,7 +230,7 @@
     </div>  
   
     <!-- 牌阵选择库 -->  
-    <div id="page-2c" class="fixed inset-0 translate-x-full transition-transform duration-500 layer-20 p-6 flex flex-col pointer-events-auto" style="background: radial-gradient(circle at 50% 40%, var(--bg-center) 0%, var(--bg-edge) 100%);">  
+    <div id="page-2c" class="fixed inset-0 layer-20 p-6 flex flex-col pointer-events-auto" style="transform:translateX(100%); transition:transform 0.5s ease; background: radial-gradient(circle at 50% 40%, var(--bg-center) 0%, var(--bg-edge) 100%);">  
         <div class="absolute left-6 z-50 pointer-events-auto safe-top-nav">  
             <button id="back-from-2c" class="text-[var(--gold)] text-lg tracking-widest cursor-pointer font-occult flex items-center h-12 leading-none p-2 -ml-2 transition-colors duration-400">← 归还</button>  
         </div>  
@@ -267,6 +272,8 @@
     <script>  
         if (window.Telegram && window.Telegram.WebApp) { const tg = window.Telegram.WebApp; tg.ready(); tg.expand(); tg.setHeaderColor('#000000'); tg.setBackgroundColor('#000000'); }
         let userId = null; let userName = "未知探索者";
+        let currentUser = null;
+        let justSwiped = false;
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) { userId = window.Telegram.WebApp.initDataUnsafe.user.id; userName = window.Telegram.WebApp.initDataUnsafe.user.first_name; }
         const BACKEND_URL = "/api/tarrt";
         const FONT_OCCULT = "'Didot', 'Bodoni MT', 'Noto Serif SC', 'Songti SC', serif";  
@@ -385,13 +392,13 @@
   
         let globalDrag = false, globalStartX = 0;  
         const startGlobalDrag = (e) => {  
-            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('#profile-btn') || e.target.closest('#page-2c') || e.target.closest('#ai-scroll-view') || e.target.closest('#start-drawing-area')) return;  
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('#profile-btn') || e.target.closest('#page-2c') || e.target.closest('#ai-scroll-view')) return;  
             globalDrag = true; globalStartX = e.clientX || (e.touches && e.touches[0].clientX);  
         };  
         const endGlobalDrag = (e) => {  
             if (!globalDrag) return; globalDrag = false;  
             let endX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);  
-            if (appPhase === 'idle' && globalStartX - endX > 60) dom.p2c.classList.remove('translate-x-full');  
+            if (appPhase === 'idle' && globalStartX - endX > 60) { dom.p2c.style.transform = 'translateX(0)'; justSwiped = true; setTimeout(() => justSwiped = false, 300); }  
             if ((appPhase === 'spirit_intro' || appPhase === 'spirit_revealed') && globalStartX - endX > 60) {   
                 dom.spiritText.style.opacity = '0';   
                 startSpiritCarousel();   
@@ -400,7 +407,7 @@
         document.addEventListener('touchstart', startGlobalDrag); document.addEventListener('mousedown', startGlobalDrag);  
         document.addEventListener('touchend', endGlobalDrag); document.addEventListener('mouseup', endGlobalDrag);  
           
-        document.getElementById('back-from-2c').onclick = () => dom.p2c.classList.add('translate-x-full');  
+        document.getElementById('back-from-2c').onclick = () => dom.p2c.style.transform = 'translateX(100%)';  
           
         document.getElementById('skip-btn').onclick = () => {  
             dom.decodeModule.classList.remove('btn-reveal');  
@@ -426,10 +433,10 @@
         function renderSpreadList() {  
             dom.spreadList.innerHTML = PREDEFINED_SPREADS.map(spread => `<div class="frosted p-5 rounded-2xl cursor-pointer active:scale-95 transition-transform border ${currentActiveSpread.id === spread.id ? 'border-[var(--gold)]' : 'border-transparent'}" onclick="selectSpread('${spread.id}')"><h3 class="text-[var(--gold)] text-xl mb-1 font-occult">${spread.name}</h3><p class="text-[13px] opacity-60 font-occult">${spread.desc}</p></div>`).join('');  
         }  
-        window.selectSpread = (id) => { currentActiveSpread = PREDEFINED_SPREADS.find(s => s.id === id); dom.previewName.innerText = currentActiveSpread.name; dom.p2c.classList.add('translate-x-full'); renderSpreadList(); };  
+        window.selectSpread = (id) => { currentActiveSpread = PREDEFINED_SPREADS.find(s => s.id === id); dom.previewName.innerText = currentActiveSpread.name; dom.p2c.style.transform = 'translateX(100%)'; renderSpreadList(); };  
         renderSpreadList();  
   
-        document.getElementById('start-drawing-area').onclick = () => { dom.p1.style.opacity = '0'; setTimeout(() => { dom.p1.style.pointerEvents = 'none'; startDrawingPhase(); }, 300); };  
+        document.getElementById('start-drawing-area').onclick = () => { if(justSwiped) return; dom.p1.style.opacity = '0'; setTimeout(() => { dom.p1.style.pointerEvents = 'none'; startDrawingPhase(); }, 300); };  
   
         dom.followUpInput.addEventListener('input', function() { this.style.height = '48px'; this.style.height = (this.scrollHeight) + 'px'; });  
   
@@ -797,25 +804,20 @@
         
         // 后台初始化 Supabase（不阻塞页面渲染）
         function initSupabaseInBackground() {
-            function tryInit() {
-                if (window.__supabaseReady && window.supabase) {
-                    try {
-                        const SUPABASE_URL = 'https://epquctnhooglwexzwjtw.supabase.co';
-                        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwcXVjdG5ob29nbHdleHp3anR3Iiwicm9sZSI6ImFub24iLCJpYTQiOjE3Njg1MDM4NDZ9.XrFhEc_a5wN4uQx4Fz1KxYcI8d3bZvUeKpR5sLmN2gQ';
-                        window.sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                        // 监听 auth 状态
-                        window.sbClient.auth.onAuthStateChange((event, session) => {
-                            if (event === 'SIGNED_IN' && session) {
-                                syncSpiritCard();
-                            }
-                        });
-                        console.log('Supabase connected');
-                    } catch(e) { console.warn('Supabase init error:', e); }
-                } else {
-                    setTimeout(tryInit, 500);
-                }
-            }
-            tryInit();
+            loadSupabase().then(() => {
+                try {
+                    const SUPABASE_URL = 'https://epquctnhooglwexzwjtw.supabase.co';
+                    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwcXVjdG5ob29nbHdleHp3anR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNzk5OTEsImV4cCI6MjA5NDY1NTk5MX0.8OGyeJfuh-FjstYJ_Wwlq0FDJO9Ge96nF4pvmDb7F-Y';
+                    window.sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    // 监听 auth 状态
+                    window.sbClient.auth.onAuthStateChange((event, session) => {
+                        if (event === 'SIGNED_IN' && session) {
+                            syncSpiritCard();
+                        }
+                    });
+                    console.log('Supabase connected');
+                } catch(e) { console.warn('Supabase init error:', e); }
+            }).catch(err => console.warn(err));
         }
         
         // Spirit Card 同步到 Supabase
