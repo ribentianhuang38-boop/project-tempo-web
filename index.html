@@ -505,8 +505,8 @@
             dom.p1.style.opacity = '0'; dom.p1.style.pointerEvents = 'none';  
             dom.p2a.classList.remove('translate-y-full'); dom.p2a.style.opacity = '1';   
             spiritScale = 0; spiritFlipProgress = 0;  
-            if (mySpiritCard) { appPhase = 'spirit_revealed'; dom.spiritSub.innerText = "灵境已连结，向左滑动可重铸契约"; }   
-            else { appPhase = 'spirit_intro'; dom.spiritSub.innerText = "点击中心唤醒未知，或向左滑动自选"; }  
+            if (mySpiritCard) { appPhase = 'spirit_revealed'; }   
+            else { appPhase = 'spirit_intro'; }  
         };  
           
         document.getElementById('back-from-2a').onclick = () => { dom.p2a.style.opacity = '0'; appPhase = 'spirit_exit'; };  
