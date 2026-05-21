@@ -158,7 +158,36 @@
             border-radius: 18px 18px 18px 4px;  
             transition: background 0.4s ease, border-color 0.4s ease;  
         }  
-    </style>
+    /* ================= 64帧大颗粒像素高帧率核心适配 ================= */
+.pixel-pet-64 {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-image: url('./assets/pet/black_cat_64_strip.png');
+    background-size: 6400% 100%;
+    width: 64px; 
+    height: 64px;
+    background-position: 0% 0;
+}
+.pet-idle-64-fluid {
+    animation: petIdle64Loop 1.6s steps(64) infinite;
+}
+@keyframes petIdle64Loop {
+    from { background-position: 0% 0; }
+    to { background-position: 100% 0; }
+}
+#page-2a .frosted {
+    background: linear-gradient(180deg, rgba(30, 30, 38, 0.4) 0%, rgba(15, 15, 20, 0.7) 100%);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+}
+.portal-active {
+    animation: portalPulse 0.5s ease infinite alternate;
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+}
+@keyframes portalPulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+
+</style>
     <script>
       function loadSupabase(){
         if(loadSupabase._p) return loadSupabase._p;
@@ -238,16 +267,68 @@
         <div class="flex-1 overflow-y-auto space-y-4 pb-10 no-scrollbar" id="spread-list"></div>  
     </div>  
   
-    <!-- 我的牌灵界面 -->  
-    <div id="page-2a" class="fixed inset-0 translate-y-full transition-transform duration-500 layer-20 flex flex-col pointer-events-none opacity-0">  
-        <div class="absolute left-6 z-50 pointer-events-auto safe-top-nav">  
-            <button id="back-from-2a" class="text-[var(--gold)] text-lg tracking-widest cursor-pointer font-occult flex items-center h-12 leading-none p-2 -ml-2 transition-colors duration-400">← 大厅</button>  
-        </div>  
-        <div id="spirit-ui-text" class="absolute bottom-24 left-0 right-0 text-center pointer-events-none transition-opacity duration-500">  
-            <p class="text-[var(--gold)] text-2xl tracking-[0.3em] mb-3 font-occult transition-colors duration-400">灵境羁绊</p>  
-            <p class="text-xs opacity-50 tracking-[0.1em] font-occult" id="spirit-subtitle">点击中心唤醒未知，或向左滑动自选</p>  
-        </div>  
-    </div>  
+    <!-- 🌌 灵境枢纽 -->
+    <div id="page-2a" class="fixed inset-0 translate-y-full transition-transform duration-500 layer-20 flex flex-col pointer-events-none opacity-0 select-none" style="background: radial-gradient(circle at 50% 30%, var(--bg-center) 0%, var(--bg-edge) 100%);">
+        <div class="absolute left-6 right-6 z-50 pointer-events-auto safe-top-nav flex justify-between items-center h-12">
+            <button id="back-from-2a" class="text-[var(--gold)] text-sm tracking-[0.2em] cursor-pointer font-occult transition-opacity hover:opacity-80">← EXIT HALL</button>
+            <div class="flex items-center space-x-1 border border-[var(--gold)]/20 rounded-full p-0.5 bg-black/20 font-occult pointer-events-auto">
+                <button id="tab-spirit" class="px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] bg-[var(--gold)] text-black font-medium transition-all duration-300">Pact/牌灵</button>
+                <button id="tab-pet" class="px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] text-[var(--gold)]/60 transition-all duration-300">Familiar/灵宠</button>
+            </div>
+            <span class="text-[var(--gold)]/40 text-[10px] tracking-[0.4em] font-occult hidden sm:inline">NEXUS v1.0</span>
+        </div>
+        <div class="flex-1 w-full overflow-hidden relative">
+            <div id="nexus-belt" class="absolute inset-0 flex w-[200%] transition-transform duration-500 cubic-bezier(0.25, 1, 0.5, 1) pointer-events-auto">
+                <div class="w-1/2 h-full flex items-center justify-center p-6 pt-24 pb-12">
+                    <div class="w-full max-w-sm frosted rounded-3xl p-6 border border-[var(--gold)]/20 flex flex-col items-center justify-between h-full max-h-[500px] shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
+                        <div class="w-full text-center"><p class="text-[10px] tracking-[0.3em] opacity-40 uppercase font-occult mb-1">Arcana Pact</p><h3 class="text-[var(--gold)] text-lg tracking-[0.2em] font-occult">已缔结的牌灵</h3></div>
+                        <div class="relative w-full flex-1 flex flex-col items-center justify-center my-4"><div id="nexus-spirit-placeholder" class="text-center font-occult space-y-2"></div></div>
+                        <button id="reforge-spirit-btn" class="w-full py-3 rounded-xl border border-[var(--gold)]/40 text-[var(--gold)] text-xs tracking-[0.2em] font-occult uppercase transition-all duration-300 hover:bg-[var(--gold)]/10 active:scale-[0.98]">✧ 重铸星轨契约 ✧</button>
+                    </div>
+                </div>
+                <div class="w-1/2 h-full flex items-center justify-center p-6 pt-24 pb-12">
+                    <div class="w-full max-w-sm frosted rounded-3xl p-6 border border-[var(--gold)]/20 flex flex-col items-center justify-between h-full max-h-[500px] shadow-[0_12px_40px_rgba(0,0,0,0.5)] relative overflow-hidden">
+                        <div id="pet-panel-main" class="w-full h-full flex flex-col justify-between transition-all duration-500">
+                            <div class="w-full text-center"><p class="text-[10px] tracking-[0.3em] opacity-40 uppercase font-occult mb-1">Entity Status</p><h3 class="text-[var(--gold)] text-lg tracking-[0.2em] font-occult">伴灵育成境域</h3></div>
+                            <div class="w-full flex-1 flex flex-col justify-center space-y-4 my-4 px-2 font-occult">
+                                <div class="flex items-center space-x-4 bg-black/20 p-3 rounded-2xl border border-white/5">
+                                    <div class="w-14 h-14 rounded-xl bg-black/40 border border-[var(--gold)]/20 flex items-center justify-center overflow-hidden"><div class="pixel-pet-64 pet-idle-64-fluid scale-75 origin-center"></div></div>
+                                    <div><h4 id="nexus-pet-name" class="text-[var(--gold)] text-base tracking-wide">午夜黑猫</h4><p id="nexus-pet-personality" class="text-[11px] opacity-50 mt-0.5">特质：死傲娇 · 懂梗老司机</p></div>
+                                </div>
+                                <div class="space-y-1.5 bg-black/10 p-3 rounded-2xl border border-white/5">
+                                    <div class="flex justify-between text-[11px] tracking-wider"><span class="opacity-40">羁绊能级 (BOND)</span><span id="nexus-pet-bond-val" class="text-[var(--gold)]">LV.1 (24/100)</span></div>
+                                    <div class="w-full h-1 bg-black/40 rounded-full overflow-hidden border border-white/5"><div id="nexus-pet-bond-bar" class="h-full bg-gradient-to-r from-[var(--gold)]/50 to-[var(--gold)] transition-all duration-500" style="width: 24%;"></div></div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <button id="nexus-pet-interact-1" class="py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-[var(--text)] tracking-widest transition-all hover:bg-white/10 active:scale-95">投喂星尘</button>
+                                    <button id="nexus-pet-interact-2" class="py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-[var(--text)] tracking-widest transition-all hover:bg-white/10 active:scale-95">强行贴贴</button>
+                                </div>
+                            </div>
+                            <div class="w-full flex flex-col items-center space-y-3">
+                                <p id="nexus-pet-status-desc" class="text-[10px] opacity-40 tracking-wider font-occult text-center h-4">「它正在盯着大厅右下角的飞尘发呆」</p>
+                                <button id="go-to-summon-btn" class="text-[10px] text-[var(--gold)] opacity-60 tracking-[0.2em] font-occult hover:opacity-100 transition-opacity">⚡ 前往迷雾法阵召唤新伴灵 →</button>
+                            </div>
+                        </div>
+                        <div id="pet-panel-summon" class="absolute inset-0 bg-[var(--card-bg)]/95 p-6 flex flex-col justify-between translate-y-full transition-transform duration-500 z-10">
+                            <div class="w-full text-center relative">
+                                <button id="back-to-pet-main" class="absolute left-0 text-[10px] text-[var(--gold)]/60 tracking-widest font-occult">← 返回</button>
+                                <p class="text-[10px] tracking-[0.3em] opacity-40 uppercase font-occult mb-1">Summon Ritual</p>
+                                <h3 class="text-[var(--gold)] text-lg tracking-[0.2em] font-occult">迷雾召唤仪式</h3>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center justify-center my-4 space-y-4">
+                                <div id="summon-portal" class="w-24 h-24 rounded-full border border-dashed border-[var(--gold)]/30 flex items-center justify-center text-3xl transition-all duration-1000 relative">
+                                    <span class="text-[var(--gold)]/20 absolute animate-spin" style="animation-duration: 8s;">🔮</span>
+                                    <div id="summon-result-wrapper" class="opacity-0 scale-50 transition-all duration-500 z-10 overflow-hidden w-16 h-16 flex items-center justify-center"><div class="pixel-pet-64 pet-idle-64-fluid"></div></div>
+                                </div>
+                                <p id="summon-tips" class="text-[11px] opacity-50 text-center font-occult px-4 leading-relaxed">往古籍中注入 100 盎司的星光，即可在星域中随机具象化一位高维伴灵。</p>
+                            </div>
+                            <button id="execute-summon-btn" class="w-full py-3 rounded-xl bg-[var(--gold)] text-black text-xs font-bold tracking-[0.2em] font-occult uppercase shadow-[0_0_20px_rgba(212,175,55,0.3)] active:scale-[0.98] transition-transform">✧ 破开迷雾：唤醒伴灵 ✧</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
   
     <!-- AI 解牌结果页 (加入自适应蒙版 + 防事件穿透保护) -->  
     <div id="page-4b" class="fixed inset-0 translate-y-full transition-transform duration-700 layer-40 flex flex-col pointer-events-none" style="background: var(--overlay); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); transition: background 0.4s ease, transform 0.7s;">  
@@ -392,7 +473,7 @@
   
         let globalDrag = false, globalStartX = 0;  
         const startGlobalDrag = (e) => {  
-            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('#profile-btn') || e.target.closest('#page-2c') || e.target.closest('#ai-scroll-view')) return;  
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('#profile-btn') || e.target.closest('#page-2c') || e.target.closest('#ai-scroll-view') || e.target.closest('#page-2a') || e.target.closest('#global-pet-companion')) return;  
             globalDrag = true; globalStartX = e.clientX || (e.touches && e.touches[0].clientX);  
         };  
         const endGlobalDrag = (e) => {  
@@ -782,6 +863,23 @@
                 loginPage.classList.add('hidden-login');
                 // 后台尝试连 Supabase（不阻塞）
                 initSupabaseInBackground();
+        // ================= 灵境枢纽综合控制中心 =================
+        const NexusController = {
+            init() {
+                const tabSpirit = document.getElementById('tab-spirit');
+                const tabPet = document.getElementById('tab-pet');
+                const belt = document.getElementById('nexus-belt');
+                if (!tabSpirit || !tabPet || !belt) return;
+                const spiritContent = document.getElementById('nexus-spirit-placeholder').parentElement;
+                const petContent = document.getElementById('pet-panel-main');
+                tabSpirit.onclick = (e) => { e.stopPropagation(); belt.style.transform = 'translateX(0%)'; petContent.style.visibility = 'hidden'; spiritContent.style.visibility = 'visible'; tabSpirit.className = 'px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] bg-[var(--gold)] text-black font-medium transition-all duration-300'; tabPet.className = 'px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] text-[var(--gold)]/60 transition-all duration-300'; };
+                tabPet.onclick = (e) => { e.stopPropagation(); belt.style.transform = 'translateX(-50%)'; spiritContent.style.visibility = 'hidden'; petContent.style.visibility = 'visible'; tabPet.className = 'px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] bg-[var(--gold)] text-black font-medium transition-all duration-300'; tabSpirit.className = 'px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] text-[var(--gold)]/60 transition-all duration-300'; };
+                document.getElementById('go-to-summon-btn').onclick = (e) => { e.stopPropagation(); document.getElementById('pet-panel-summon').style.transform = 'translateY(0%)'; };
+                document.getElementById('back-to-pet-main').onclick = (e) => { e.stopPropagation(); document.getElementById('pet-panel-summon').style.transform = 'translateY(100%)'; document.getElementById('summon-portal').classList.remove('portal-active'); document.getElementById('summon-result-wrapper').className = 'opacity-0 scale-50 transition-all duration-500 z-10 overflow-hidden w-16 h-16 flex items-center justify-center'; document.getElementById('summon-tips').innerText = '往古籍中注入 100 盎司的星光，即可在星域中随机具象化一位高维伴灵。'; };
+                document.getElementById('execute-summon-btn').onclick = (e) => { e.stopPropagation(); const portal = document.getElementById('summon-portal'); const tips = document.getElementById('summon-tips'); const resultWrap = document.getElementById('summon-result-wrapper'); portal.classList.add('portal-active'); tips.innerText = '星轨重组中……灵质正在跨维度具象化……'; setTimeout(() => { portal.classList.remove('portal-active'); resultWrap.className = 'opacity-100 scale-110 duration-500 z-10 overflow-hidden w-16 h-16 flex items-center justify-center'; tips.innerHTML = '🎉 成功缔结灵境契约：<span class="text-[var(--gold)]">午夜黑猫</span>！<br><span class="italic opacity-60">"本座才不是什么普通家猫！"</span>'; }, 1500); };
+            }
+        };
+        NexusController.init();
                 return;
             }
             
@@ -821,7 +919,14 @@
             }).catch(err => console.warn(err));
         }
         
-        // Spirit Card 同步到 Supabase
+        // 🐈 宠物事件冒泡阻断
+const petSpriteEl = document.getElementById('pet-core-sprite');
+if (petSpriteEl) {
+    petSpriteEl.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
+    petSpriteEl.addEventListener('mousedown', (e) => e.stopPropagation());
+}
+
+// Spirit Card 同步到 Supabase
         function syncSpiritCard() {
             if (!window.sbClient || !mySpiritCard) return;
             window.sbClient.auth.getSession().then(({data}) => {
@@ -891,5 +996,13 @@
         }
         checkAuth();
     </script>
+    <!-- 🐈 悬浮伴灵全局容器 -->
+    <div id="global-pet-companion" class="fixed z-[100] pointer-events-auto transition-all duration-700" style="left: 80%; top: 75%;">
+        <div id="pet-global-bubble" class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 p-4 rounded-2xl frosted border border-[var(--gold)]/30 text-[12px] text-[var(--gold)] font-occult shadow-xl leading-relaxed opacity-0 scale-90 transition-all duration-300 pointer-events-none"></div>
+        <div id="pet-anim-wrapper" class="transition-all duration-1000 ease-in-out">
+            <div id="pet-core-sprite" class="pixel-pet-64 pet-idle-64-fluid hover:scale-110 active:scale-95 transition-transform duration-200" title="戳它一下" style="cursor:pointer;"></div>
+        </div>
+    </div>
+
 </body>  
 </html>  
