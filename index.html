@@ -163,7 +163,7 @@
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     background-image: url('./assets/pet/black_cat_64_strip.png');
-    background-size: 6400% 100%;
+    background-size: 6400% 264.1%;
     width: 64px; 
     height: 64px;
     background-position: 0% 0;
@@ -856,8 +856,7 @@
                   
                 if (appPhase === 'interacting' && allFlipped && !movingCards.length && !spreadCards.some(sc => sc.isFlipping)) {   
                     appPhase = 'converging'; convergeStartTime = Date.now();   
-                    setTimeout(() => { appPhase = 'finished'; coreEnergy = 0; coreRadius = 0; particles = []; dom.decodeModule.classList.    </style>
-    <script>('btn-hidden', 'btn-reveal'); }, CONVERGE_DURATION);   
+                    setTimeout(() => { appPhase = 'finished'; coreEnergy = 0; coreRadius = 0; particles = []; dom.decodeModule.classList.replace('btn-hidden', 'btn-reveal'); }, CONVERGE_DURATION);   
                 }  
             }  
             requestAnimationFrame(render);  
@@ -929,132 +928,15 @@
         };
         NexusController.init();
 
+        // ===== 登录系统已暂时下线 =====
+        // 原始登录逻辑已归档，当前直接进入主页
         function checkAuth() {
             const loginPage = document.getElementById('login-page');
             const page1 = document.getElementById('page-1');
-            
-            // 1. 先检查本地 token（Instant Auth）
-            const stored = localStorage.getItem('auth_token');
-            if (stored) {
-                currentUser = JSON.parse(stored);
-                page1.style.opacity = '1';
-                page1.style.pointerEvents = 'auto';
-                loginPage.classList.add('hidden-login');
-                // 后台尝试连 Supabase（不阻塞）
-                initSupabaseInBackground();
-                return;
-            }
-            
-            // 2. Telegram 环境：自动登录
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-                currentUser = { id: 'tg_' + tgUser.id, name: tgUser.first_name, platform: 'telegram' };
-                localStorage.setItem('auth_token', JSON.stringify(currentUser));
-                page1.style.opacity = '1';
-                page1.style.pointerEvents = 'auto';
-                loginPage.classList.add('hidden-login');
-                initSupabaseInBackground();
-                return;
-            }
-            
-            // 3. 未登录：显示登录页
-            page1.style.opacity = '0';
-            page1.style.pointerEvents = 'none';
-            loginPage.classList.remove('hidden-login');
-        }
-        
-        // 后台初始化 Supabase（不阻塞页面渲染）
-        function initSupabaseInBackground() {
-            loadSupabase().then(() => {
-                try {
-                    const SUPABASE_URL = 'https://epquctnhooglwexzwjtw.supabase.co';
-                    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwcXVjdG5ob29nbHdleHp3anR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNzk5OTEsImV4cCI6MjA5NDY1NTk5MX0.8OGyeJfuh-FjstYJ_Wwlq0FDJO9Ge96nF4pvmDb7F-Y';
-                    window.sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                    // 监听 auth 状态
-                    window.sbClient.auth.onAuthStateChange((event, session) => {
-                        if (event === 'SIGNED_IN' && session) {
-                            syncSpiritCard();
-                        }
-                    });
-                    console.log('Supabase connected');
-                } catch(e) { console.warn('Supabase init error:', e); }
-            }).catch(err => console.warn(err));
-        }
-        
-        // 🐈 宠物事件冒泡阻断
-const petSpriteEl = document.getElementById('pet-core-sprite');
-if (petSpriteEl) {
-    petSpriteEl.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
-    petSpriteEl.addEventListener('mousedown', (e) => e.stopPropagation());
-}
-
-// Spirit Card 同步到 Supabase
-        function syncSpiritCard() {
-            if (!window.sbClient || !mySpiritCard) return;
-            window.sbClient.auth.getSession().then(({data}) => {
-                if (data.session) {
-                    window.sbClient.from('profiles').upsert({
-                        id: data.session.user.id,
-                        spirit_card: mySpiritCard,
-                        updated_at: new Date().toISOString()
-                    }, { onConflict: 'id' });
-                }
-            });
-        }
-        function telegramLogin() {
-            if (window.Telegram && window.Telegram.WebApp) {
-                const tg = window.Telegram.WebApp;
-                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                    const tgUser = tg.initDataUnsafe.user;
-                    localStorage.setItem('auth_token', JSON.stringify({ id: 'tg_' + tgUser.id, name: tgUser.first_name, platform: 'telegram' }));
-                    localStorage.setItem('tarot_user_profile', JSON.stringify({ method: 'telegram', id: tgUser.id, name: tgUser.first_name, avatar: tgUser.photo_url || '' }));
-                    transitionToApp();
-                } else { document.getElementById('login-error').innerText = '请在 Telegram 内打开此应用'; }
-            } else { document.getElementById('login-error').innerText = '未检测到 Telegram 环境'; }
-        }
-        function emailLogin() {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value.trim();
-            const errorEl = document.getElementById('login-error'); errorEl.innerText = '';
-            if (!email) { errorEl.innerText = '请输入邮箱地址'; return; }
-            if (!password) { errorEl.innerText = '请输入密码'; return; }
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errorEl.innerText = '邮箱格式不正确'; return; }
-            if (password.length < 6) { errorEl.innerText = '密码至少6位'; return; }
-            
-            errorEl.innerText = '登录中...'; errorEl.style.color = '#aaa';
-            
-            // 设置本地用户
-            currentUser = { id: 'email_' + btoa(email), name: email.split('@')[0], platform: 'email', email: email };
-            localStorage.setItem('auth_token', JSON.stringify(currentUser));
-            
-            // Supabase 登录
-            function doLogin() {
-                if (window.sbClient) {
-                    window.sbClient.auth.signInWithPassword({ email: email, password: password })
-                        .then(({data, error}) => {
-                            if (error) return window.sbClient.auth.signUp({ email: email, password: password });
-                            return data;
-                        })
-                        .then(() => syncSpiritCard())
-                        .catch(e => console.warn('Supabase auth:', e));
-                }
-            }
-            
-            setTimeout(() => {
-                errorEl.innerText = '✓ 登录成功'; errorEl.style.color = '#4ecdc4';
-                doLogin();
-                setTimeout(() => {
-                    const p = document.getElementById('page-1');
-                    p.style.opacity = '1';
-                    p.style.pointerEvents = 'auto';
-                    document.getElementById('login-page').classList.add('hidden-login');
-                }, 500);
-            }, 800);
-        }
-        function logout() { localStorage.removeItem('auth_token'); localStorage.removeItem('tarot_user_profile'); location.reload(); }
-        function transitionToApp() {
-            document.getElementById('login-page').classList.add('hidden-login');
-            const p = document.getElementById('page-1'); p.style.opacity = '1'; p.style.pointerEvents = 'auto';
+            // 直接显示主页，跳过登录
+            if (loginPage) loginPage.classList.add('hidden-login');
+            if (page1) { page1.style.opacity = '1'; page1.style.pointerEvents = 'auto'; }
+            initSupabaseInBackground();
         }
         checkAuth();
     </script>
