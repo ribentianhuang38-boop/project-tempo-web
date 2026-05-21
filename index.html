@@ -169,11 +169,11 @@
     background-position: 0% 0;
 }
 .pet-idle-64-fluid {
-    animation: petIdle64Loop 1.6s steps(64) infinite;
+    animation: petIdle64Loop 1.6s steps(64, end) infinite;
 }
 @keyframes petIdle64Loop {
-    from { background-position: 0% 0; }
-    to { background-position: 100% 0; }
+    from { background-position: 0 0; }
+    to { background-position: -4032px 0; }
 }
 #page-2a .frosted {
     background: linear-gradient(180deg, rgba(30, 30, 38, 0.4) 0%, rgba(15, 15, 20, 0.7) 100%);
@@ -457,7 +457,7 @@
             p2a: document.getElementById('page-2a'), p4b: document.getElementById('page-4b'),   
             decodeModule: document.getElementById('decode-module'),  
             previewName: document.getElementById('preview-spread-name'), spreadList: document.getElementById('spread-list'),  
-            spiritText: document.getElementById('spirit-ui-text'), spiritSub: document.getElementById('spirit-subtitle'),  
+            spiritText: null, spiritSub: null,  // removed old spirit elements  
             chatContainer: document.getElementById('chat-container'), aiScrollView: document.getElementById('ai-scroll-view'),  
             followUpInput: document.getElementById('follow-up-input'), followUpBtn: document.getElementById('send-follow-up-btn')  
         };  
@@ -481,7 +481,7 @@
             let endX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);  
             if (appPhase === 'idle' && globalStartX - endX > 60) { dom.p2c.style.transform = 'translateX(0)'; justSwiped = true; setTimeout(() => justSwiped = false, 300); }  
             if ((appPhase === 'spirit_intro' || appPhase === 'spirit_revealed') && globalStartX - endX > 60) {   
-                dom.spiritText.style.opacity = '0';   
+                // spiritText removed - nexus handles display   
                 startSpiritCarousel();   
             }  
         };  
@@ -503,7 +503,7 @@
   
         document.getElementById('profile-btn').onclick = () => {  
             dom.p1.style.opacity = '0'; dom.p1.style.pointerEvents = 'none';  
-            dom.p2a.classList.remove('translate-y-full'); dom.p2a.style.opacity = '1'; dom.spiritText.style.opacity = '1';   
+            dom.p2a.classList.remove('translate-y-full'); dom.p2a.style.opacity = '1';   
             spiritScale = 0; spiritFlipProgress = 0;  
             if (mySpiritCard) { appPhase = 'spirit_revealed'; dom.spiritSub.innerText = "灵境已连结，向左滑动可重铸契约"; }   
             else { appPhase = 'spirit_intro'; dom.spiritSub.innerText = "点击中心唤醒未知，或向左滑动自选"; }  
