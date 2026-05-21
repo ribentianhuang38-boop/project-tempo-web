@@ -163,21 +163,17 @@
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     background-image: url('./assets/pet/black_cat_64_strip.png');
-    background-size: 6400% 264.1%;
-    width: 64px; 
+    background-size: 6400% auto;
+    width: 64px;
     height: 64px;
-    background-position: 0% 0;
+    background-position: 0 0;
 }
 .pet-idle-64-fluid {
     animation: petIdle64Loop 1.6s steps(64, end) infinite;
 }
 @keyframes petIdle64Loop {
-    from { 
-        background-position: 0 0; 
-    }
-    to { 
-        background-position: calc(-64px * 64) 0; 
-    }
+    from { background-position: 0 0; }
+    to { background-position: -4032px 0; }
 }
 #page-2a .frosted {
     background: linear-gradient(180deg, rgba(30, 30, 38, 0.4) 0%, rgba(15, 15, 20, 0.7) 100%);
@@ -193,13 +189,13 @@
 
 /* 坐下动画: 帧32-47 (16帧) */
 @keyframes petSitLoop {
-    from { background-position: calc(-64px * 32) 0; }
-    to { background-position: calc(-64px * 47) 0; }
+    from { background-position: -2048px 0; }
+    to { background-position: -3008px 0; }
 }
 /* 行走动画: 帧0-15 (16帧) */
 @keyframes petWalkLoop {
     from { background-position: 0 0; }
-    to { background-position: calc(-64px * 15) 0; }
+    to { background-position: -960px 0; }
 }
 </style>
     <script>
@@ -883,23 +879,17 @@
             
             startSitting() {
                 this.currentMode = 'sit';
-                // 切换到坐下帧范围: background-position range
-                // 每帧64px, 坐下起始帧32 -> position = -32*64 = -2048px
-                this.sprite.style.animationPlayState = 'running';
-                this.sprite.style.backgroundPosition = '0 0';
-                // 用独立的步进动画: 16帧坐下循环
+                this.sprite.className = 'pixel-pet-64 hover:scale-110 active:scale-95 transition-transform duration-200';
+                void this.sprite.offsetWidth; // force reflow
                 this.sprite.style.animation = 'petSitLoop 1.6s steps(16) infinite';
             },
             
             startWalking() {
                 this.currentMode = 'walk';
-                // 行走: 16帧循环从帧0开始
+                this.sprite.className = 'pixel-pet-64 hover:scale-110 active:scale-95 transition-transform duration-200';
+                void this.sprite.offsetWidth;
                 this.sprite.style.animation = 'petWalkLoop 1.2s steps(16) infinite';
-                // 走3秒后坐下
-                setTimeout(() => {
-                    this.startSitting();
-                    this.scheduleRandomWalk();
-                }, 3000);
+            }, 3000);
             },
             
             scheduleRandomWalk() {
