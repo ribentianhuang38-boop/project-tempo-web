@@ -173,7 +173,7 @@
 }
 @keyframes petIdle64Loop {
     from { background-position: 0 0; }
-    to { background-position: -4096px 0; }
+    to { background-position: calc(-64px * 64) 0; } /* -4096px */
 }
 #page-2a .frosted {
     background: linear-gradient(180deg, rgba(30, 30, 38, 0.4) 0%, rgba(15, 15, 20, 0.7) 100%);
@@ -190,12 +190,32 @@
 /* 坐下动画: 帧32-47 (16帧) */
 @keyframes petSitLoop {
     from { background-position: -2048px 0; }
-    to { background-position: -3008px 0; }
+    to { background-position: calc(-64px * 48) 0; } /* -3072px */
 }
 /* 行走动画: 帧0-15 (16帧) */
 @keyframes petWalkLoop {
     from { background-position: 0 0; }
-    to { background-position: -960px 0; }
+    to { background-position: calc(-64px * 16) 0; } /* -1024px */
+}
+
+/* ===== 像素版神灯伴灵特效 ===== */
+.genie-in {
+    animation: genieInAnim 0.6s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
+    transform-origin: center bottom;
+}
+@keyframes genieInAnim {
+    0% { transform: translateY(0) scale(1, 1); opacity: 1; }
+    40% { transform: translateY(-15px) scale(0.6, 1.4); opacity: 0.8; }
+    100% { transform: translateY(60px) scale(0, 0); opacity: 0; }
+}
+.genie-out {
+    animation: genieOutAnim 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    transform-origin: center bottom;
+}
+@keyframes genieOutAnim {
+    0% { transform: translateY(60px) scale(0, 0); opacity: 0; }
+    60% { transform: translateY(-10px) scale(1.2, 0.8); opacity: 1; }
+    100% { transform: translateY(0) scale(1, 1); opacity: 1; }
 }
 </style>
     <script>
@@ -597,6 +617,7 @@
   
         // 🌟 抽牌初次神谕逻辑 (已脱敏) 🌟  
         document.getElementById('decode-btn').onclick = () => {
+            PetAnimator.genieEject();
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); }
             dom.p4b.classList.remove('pointer-events-none'); dom.p4b.classList.add('pointer-events-auto');  
             dom.p4b.classList.remove('translate-y-full');  
@@ -693,7 +714,7 @@
         }  
   
         let carouselRotation = 0, targetRotation = 0; let availableCards = [], spreadCards = [], movingCards = [];  
-        function startDrawingPhase() { if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); } appPhase = 'drawing'; spreadCards = []; movingCards = []; particles = []; coreEnergy = 0; coreRadius = 0; carouselRotation = 0; targetRotation = 0; let shuffledDict = [...TAROT_DICT].sort(() => Math.random() - 0.5); availableCards = Array.from({length: 22}, (_, i) => ({ id: i, selected: false, tarotData: shuffledDict[i] })); }  
+        function startDrawingPhase() { PetAnimator.genieRetract(); if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); } appPhase = 'drawing'; spreadCards = []; movingCards = []; particles = []; coreEnergy = 0; coreRadius = 0; carouselRotation = 0; targetRotation = 0; let shuffledDict = [...TAROT_DICT].sort(() => Math.random() - 0.5); availableCards = Array.from({length: 22}, (_, i) => ({ id: i, selected: false, tarotData: shuffledDict[i] })); }  
         function startSpiritCarousel() { appPhase = 'spirit_carousel'; carouselRotation = 0; targetRotation = 0; availableCards = TAROT_DICT.slice(0, 22).map((tarotData, i) => ({ id: i, selected: false, tarotData: tarotData })); }  
           
         function getSlotCoords(index, isExpanded) {   
@@ -895,6 +916,29 @@
                 clearTimeout(this.walkTimeout);
                 const delay = 8000 + Math.random() * 7000; // 8-15秒
                 this.walkTimeout = setTimeout(() => this.startWalking(), delay);
+            },
+            
+            // 神灯收回伴灵
+            genieRetract() {
+                const container = document.getElementById('global-pet-companion');
+                if (!container) return;
+                clearTimeout(this.walkTimeout);
+                this.sprite.style.animation = 'none';
+                container.classList.remove('genie-out');
+                container.classList.add('genie-in');
+            },
+            
+            // 神灯弹出伴灵
+            genieEject() {
+                const container = document.getElementById('global-pet-companion');
+                if (!container) return;
+                container.classList.remove('genie-in');
+                container.classList.add('genie-out');
+                // 动画结束后恢复坐下动画
+                setTimeout(() => {
+                    this.startSitting();
+                    this.scheduleRandomWalk();
+                }, 700);
             }
         };
         PetAnimator.init();
