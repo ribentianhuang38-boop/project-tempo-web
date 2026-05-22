@@ -173,7 +173,7 @@
 }
 @keyframes petIdle64Loop {
     from { background-position: 0 0; }
-    to { background-position: -4032px 0; }
+    to { background-position: -4096px 0; }
 }
 #page-2a .frosted {
     background: linear-gradient(180deg, rgba(30, 30, 38, 0.4) 0%, rgba(15, 15, 20, 0.7) 100%);
@@ -852,7 +852,7 @@
                   
                 if (appPhase === 'interacting' && allFlipped && !movingCards.length && !spreadCards.some(sc => sc.isFlipping)) {   
                     appPhase = 'converging'; convergeStartTime = Date.now();   
-                    setTimeout(() => { appPhase = 'finished'; coreEnergy = 0; coreRadius = 0; particles = []; dom.decodeModule.classList.replace('btn-hidden', 'btn-reveal'); }, CONVERGE_DURATION);   
+                    setTimeout(() => { appPhase = 'finished'; coreEnergy = 0; coreRadius = 0; particles = []; dom.decodeModule.classList.toggle('btn-hidden', 'btn-reveal'); }, CONVERGE_DURATION);   
                 }  
             }  
             requestAnimationFrame(render);  
@@ -889,7 +889,6 @@
                 this.sprite.className = 'pixel-pet-64 hover:scale-110 active:scale-95 transition-transform duration-200';
                 void this.sprite.offsetWidth;
                 this.sprite.style.animation = 'petWalkLoop 1.2s steps(16) infinite';
-            }, 3000);
             },
             
             scheduleRandomWalk() {
