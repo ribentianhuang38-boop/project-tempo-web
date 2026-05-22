@@ -163,9 +163,9 @@
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     background-image: url('./assets/pet/black_cat_64_strip.png');
-    background-size: 6400% auto;
+    background-size: calc(64px * 175) auto;
     width: 64px;
-    height: 64px;
+    height: 140px;
     background-position: 0 0;
 }
 .pet-idle-64-fluid {
@@ -923,7 +923,7 @@
                 const container = document.getElementById('global-pet-companion');
                 if (!container) return;
                 clearTimeout(this.walkTimeout);
-                this.sprite.style.animation = 'none';
+                if (this.sprite) this.sprite.style.animation = 'none';
                 container.classList.remove('genie-out');
                 container.classList.add('genie-in');
             },
@@ -936,7 +936,7 @@
                 container.classList.add('genie-out');
                 // 动画结束后恢复坐下动画
                 setTimeout(() => {
-                    this.startSitting();
+                    if (this.sprite) this.startSitting();
                     this.scheduleRandomWalk();
                 }, 700);
             }
