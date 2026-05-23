@@ -857,9 +857,14 @@
                     // 🌟 开牌结束，伴灵从虚空重组
                     const petEl = document.querySelector('.web-pet');
                     if (petEl) {
-                        petEl.style.left = '50%'; petEl.style.top = '60%'; petEl.style.transform = 'translateX(-50%)';
-                        petEl.classList.remove('mist-dissipate');
-                        petEl.classList.add('mist-reform');
+                        petEl.style.visibility = 'visible';
+                        petEl.style.pointerEvents = 'auto';
+                        petEl.style.left = '50%'; petEl.style.top = '60%';
+                        petEl.style.transition = 'opacity 1s ease, filter 1s ease, transform 1s cubic-bezier(0.34,1.56,0.64,1)';
+                        petEl.style.opacity = '0'; petEl.style.filter = 'blur(16px)'; petEl.style.transform = 'translateX(-50%) scale(0.5) translateY(30px)';
+                        // 强制回流后设置目标状态
+                        void petEl.offsetWidth;
+                        petEl.style.opacity = '1'; petEl.style.filter = 'blur(0px)'; petEl.style.transform = 'translateX(-50%) scale(1) translateY(0)';
                         for(let i = 0; i < 20; i++) {
                             particles.push(new LightParticle(width/2, targetCoreY - 60));
                         }
