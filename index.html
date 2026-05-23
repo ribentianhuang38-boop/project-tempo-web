@@ -22,6 +22,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400&display=swap" rel="stylesheet">  
       
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./assets/pet/webPet.min.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>  
     <style>  
         /* 核心调色板与全局变量 */  
@@ -159,22 +160,7 @@
             transition: background 0.4s ease, border-color 0.4s ease;  
         }  
     /* ================= 64帧大颗粒像素高帧率核心适配 ================= */
-.pixel-pet-64 {
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    background-image: url('./assets/pet/black_cat_64_strip.png');
-    background-size: calc(64px * 175) auto;
-    width: 64px;
-    height: 140px;
-    background-position: 0 0;
-}
-.pet-idle-64-fluid {
-    animation: petIdle64Loop 1.6s steps(64, end) infinite;
-}
-@keyframes petIdle64Loop {
-    from { background-position: 0 0; }
-    to { background-position: calc(-64px * 64) 0; } /* -4096px */
-}
+/* web-pet 伴灵系统已替换原有精灵图 */
 #page-2a .frosted {
     background: linear-gradient(180deg, rgba(30, 30, 38, 0.4) 0%, rgba(15, 15, 20, 0.7) 100%);
     backdrop-filter: blur(32px);
@@ -187,36 +173,9 @@
 }
 @keyframes portalPulse { from { transform: scale(1); } to { transform: scale(1.05); } }
 
-/* 坐下动画: 帧32-47 (16帧) */
-@keyframes petSitLoop {
-    from { background-position: -2048px 0; }
-    to { background-position: calc(-64px * 48) 0; } /* -3072px */
-}
-/* 行走动画: 帧0-15 (16帧) */
-@keyframes petWalkLoop {
-    from { background-position: 0 0; }
-    to { background-position: calc(-64px * 16) 0; } /* -1024px */
-}
 
-/* ===== 像素版神灯伴灵特效 ===== */
-.genie-in {
-    animation: genieInAnim 0.6s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
-    transform-origin: center bottom;
-}
-@keyframes genieInAnim {
-    0% { transform: translateY(0) scale(1, 1); opacity: 1; }
-    40% { transform: translateY(-15px) scale(0.6, 1.4); opacity: 0.8; }
-    100% { transform: translateY(60px) scale(0, 0); opacity: 0; }
-}
-.genie-out {
-    animation: genieOutAnim 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    transform-origin: center bottom;
-}
-@keyframes genieOutAnim {
-    0% { transform: translateY(60px) scale(0, 0); opacity: 0; }
-    60% { transform: translateY(-10px) scale(1.2, 0.8); opacity: 1; }
-    100% { transform: translateY(0) scale(1, 1); opacity: 1; }
-}
+
+
 </style>
     <script>
       function loadSupabase(){
@@ -617,7 +576,6 @@
   
         // 🌟 抽牌初次神谕逻辑 (已脱敏) 🌟  
         document.getElementById('decode-btn').onclick = () => {
-            PetAnimator.genieEject();
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); }
             dom.p4b.classList.remove('pointer-events-none'); dom.p4b.classList.add('pointer-events-auto');  
             dom.p4b.classList.remove('translate-y-full');  
@@ -714,7 +672,7 @@
         }  
   
         let carouselRotation = 0, targetRotation = 0; let availableCards = [], spreadCards = [], movingCards = [];  
-        function startDrawingPhase() { PetAnimator.genieRetract(); if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); } appPhase = 'drawing'; spreadCards = []; movingCards = []; particles = []; coreEnergy = 0; coreRadius = 0; carouselRotation = 0; targetRotation = 0; let shuffledDict = [...TAROT_DICT].sort(() => Math.random() - 0.5); availableCards = Array.from({length: 22}, (_, i) => ({ id: i, selected: false, tarotData: shuffledDict[i] })); }  
+        function startDrawingPhase() { if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); } appPhase = 'drawing'; spreadCards = []; movingCards = []; particles = []; coreEnergy = 0; coreRadius = 0; carouselRotation = 0; targetRotation = 0; let shuffledDict = [...TAROT_DICT].sort(() => Math.random() - 0.5); availableCards = Array.from({length: 22}, (_, i) => ({ id: i, selected: false, tarotData: shuffledDict[i] })); }  
         function startSpiritCarousel() { appPhase = 'spirit_carousel'; carouselRotation = 0; targetRotation = 0; availableCards = TAROT_DICT.slice(0, 22).map((tarotData, i) => ({ id: i, selected: false, tarotData: tarotData })); }  
           
         function getSlotCoords(index, isExpanded) {   
@@ -882,66 +840,7 @@
         // ===== 契约登录系统 =====
         
         
-        // ================= 像素伴灵动画控制器 =================
-        const PetAnimator = {
-            sprite: null,
-            sitFrames: [32, 47],   // 坐下帧范围 (行4-6)
-            walkFrames: [0, 15],   // 行走帧范围 (行0-1)
-            currentMode: 'sit',
-            walkTimeout: null,
-            
-            init() {
-                this.sprite = document.getElementById('pet-core-sprite');
-                if (!this.sprite) return;
-                this.startSitting();
-                // 每隔8-15秒随机走动一下
-                this.scheduleRandomWalk();
-            },
-            
-            startSitting() {
-                this.currentMode = 'sit';
-                this.sprite.className = 'pixel-pet-64 hover:scale-110 active:scale-95 transition-transform duration-200';
-                void this.sprite.offsetWidth; // force reflow
-                this.sprite.style.animation = 'petSitLoop 1.6s steps(16) infinite';
-            },
-            
-            startWalking() {
-                this.currentMode = 'walk';
-                this.sprite.className = 'pixel-pet-64 hover:scale-110 active:scale-95 transition-transform duration-200';
-                void this.sprite.offsetWidth;
-                this.sprite.style.animation = 'petWalkLoop 1.2s steps(16) infinite';
-            },
-            
-            scheduleRandomWalk() {
-                clearTimeout(this.walkTimeout);
-                const delay = 8000 + Math.random() * 7000; // 8-15秒
-                this.walkTimeout = setTimeout(() => this.startWalking(), delay);
-            },
-            
-            // 神灯收回伴灵
-            genieRetract() {
-                const container = document.getElementById('global-pet-companion');
-                if (!container) return;
-                clearTimeout(this.walkTimeout);
-                if (this.sprite) this.sprite.style.animation = 'none';
-                container.classList.remove('genie-out');
-                container.classList.add('genie-in');
-            },
-            
-            // 神灯弹出伴灵
-            genieEject() {
-                const container = document.getElementById('global-pet-companion');
-                if (!container) return;
-                container.classList.remove('genie-in');
-                container.classList.add('genie-out');
-                // 动画结束后恢复坐下动画
-                setTimeout(() => {
-                    if (this.sprite) this.startSitting();
-                    this.scheduleRandomWalk();
-                }, 700);
-            }
-        };
-        PetAnimator.init();
+
 
         // ================= 灵境枢纽综合控制中心 =================
         const NexusController = {
@@ -973,13 +872,19 @@
         }
         checkAuth();
     </script>
-    <!-- 🐈 悬浮伴灵全局容器 -->
-    <div id="global-pet-companion" class="fixed z-[100] pointer-events-auto transition-all duration-700" style="left: 80%; top: 75%;">
-        <div id="pet-global-bubble" class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 p-4 rounded-2xl frosted border border-[var(--gold)]/30 text-[12px] text-[var(--gold)] font-occult shadow-xl leading-relaxed opacity-0 scale-90 transition-all duration-300 pointer-events-none"></div>
-        <div id="pet-anim-wrapper" class="transition-all duration-1000 ease-in-out">
-            <div id="pet-core-sprite" class="pixel-pet-64 pet-idle-64-fluid hover:scale-110 active:scale-95 transition-transform duration-200" title="戳它一下" style="cursor:pointer;"></div>
-        </div>
-    </div>
+
+
+    <script>
+        // 初始化 web-pet 伴灵
+        new WebPet({
+            name: '时光猫',
+            footPrint: true,
+            isShow: true,
+            firstPosition: 'rightLower',
+            action: { firstGreet: false, randomMove: true, randomSay: true },
+            operate: { chat: false }
+        });
+    </script>
 
 </body>  
 </html>  
