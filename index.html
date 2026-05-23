@@ -97,7 +97,7 @@
             transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;  
         }  
           
-        canvas { position: absolute; top: 0; left: 0; z-index: 5; width: 100vw; height: 100vh; pointer-events: auto; }  
+        canvas { position: absolute; top: 0; left: 0; z-index: 5; width: 100vw; height: 100vh; pointer-events: auto; transition: z-index 0s; }  
         .layer-10 { z-index: 10; } .layer-20 { z-index: 20; } .layer-40 { z-index: 40; }  
           
         /* 彻底移除滑条 */  
@@ -872,8 +872,14 @@
                 }, CONVERGE_DURATION);   
                 }  
             }  
-            requestAnimationFrame(render);  
-        }  
+            // 同步 canvas 层级：牌灵阶段提升到 page-2a 同层
+            if (appPhase === 'spirit_intro' || appPhase === 'spirit_revealing' || appPhase === 'spirit_revealed' || appPhase === 'spirit_carousel') {
+                canvas.style.zIndex = '25';
+            } else {
+                canvas.style.zIndex = '5';
+            }
+            requestAnimationFrame(render);
+        }
         render();
         // ===== 契约登录系统 =====
         
