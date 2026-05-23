@@ -173,6 +173,25 @@
 }
 @keyframes portalPulse { from { transform: scale(1); } to { transform: scale(1.05); } }
 
+/* ===== 伴灵高级出入场：迷雾与粒子重组 ===== */
+.mist-dissipate {
+    animation: mistDissipateAnim 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    pointer-events: none;
+}
+@keyframes mistDissipateAnim {
+    0% { transform: scale(1); filter: blur(0px); opacity: 1; }
+    40% { transform: scale(1.1) translateY(-5px); filter: blur(4px); opacity: 0.6; }
+    100% { transform: scale(1.5) translateY(-20px); filter: blur(16px); opacity: 0; }
+}
+.mist-reform {
+    animation: mistReformAnim 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes mistReformAnim {
+    0% { transform: scale(0.5) translateY(30px); filter: blur(16px); opacity: 0; }
+    50% { transform: scale(1.1) translateY(-5px); filter: blur(2px); opacity: 0.9; }
+    100% { transform: scale(1) translateY(0); filter: blur(0px); opacity: 1; }
+}
+
 
 
 
@@ -281,8 +300,8 @@
                             <div class="w-full text-center"><p class="text-[10px] tracking-[0.3em] opacity-40 uppercase font-occult mb-1">Entity Status</p><h3 class="text-[var(--gold)] text-lg tracking-[0.2em] font-occult">伴灵育成境域</h3></div>
                             <div class="w-full flex-1 flex flex-col justify-center space-y-4 my-4 px-2 font-occult">
                                 <div class="flex items-center space-x-4 bg-black/20 p-3 rounded-2xl border border-white/5">
-                                    <div class="w-14 h-14 rounded-xl bg-black/40 border border-[var(--gold)]/20 flex items-center justify-center overflow-hidden"><div class="pixel-pet-64 pet-idle-64-fluid scale-75 origin-center"></div></div>
-                                    <div><h4 id="nexus-pet-name" class="text-[var(--gold)] text-base tracking-wide">午夜黑猫</h4><p id="nexus-pet-personality" class="text-[11px] opacity-50 mt-0.5">特质：死傲娇 · 懂梗老司机</p></div>
+                                    <div id="nexus-pet-avatar" class="w-14 h-14 rounded-xl bg-black/40 border border-[var(--gold)]/20 flex items-center justify-center text-2xl animate-bounce">🐈</div>
+                                    <div><h4 id="nexus-pet-name" class="text-[var(--gold)] text-base tracking-wide">云端伴灵</h4><p id="nexus-pet-personality" class="text-[11px] opacity-50 mt-0.5">特质：原生形态 · 智能跟随</p></div>
                                 </div>
                                 <div class="space-y-1.5 bg-black/10 p-3 rounded-2xl border border-white/5">
                                     <div class="flex justify-between text-[11px] tracking-wider"><span class="opacity-40">羁绊能级 (BOND)</span><span id="nexus-pet-bond-val" class="text-[var(--gold)]">LV.1 (24/100)</span></div>
@@ -294,7 +313,7 @@
                                 </div>
                             </div>
                             <div class="w-full flex flex-col items-center space-y-3">
-                                <p id="nexus-pet-status-desc" class="text-[10px] opacity-40 tracking-wider font-occult text-center h-4">「它正在盯着大厅右下角的飞尘发呆」</p>
+                                <p id="nexus-pet-status-desc" class="text-[10px] opacity-40 tracking-wider font-occult text-center h-4">「它正在观察现实与虚空的临界点」</p>
                                 <button id="go-to-summon-btn" class="text-[10px] text-[var(--gold)] opacity-60 tracking-[0.2em] font-occult hover:opacity-100 transition-opacity">⚡ 前往迷雾法阵召唤新伴灵 →</button>
                             </div>
                         </div>
@@ -307,7 +326,7 @@
                             <div class="flex-1 flex flex-col items-center justify-center my-4 space-y-4">
                                 <div id="summon-portal" class="w-24 h-24 rounded-full border border-dashed border-[var(--gold)]/30 flex items-center justify-center text-3xl transition-all duration-1000 relative">
                                     <span class="text-[var(--gold)]/20 absolute animate-spin" style="animation-duration: 8s;">🔮</span>
-                                    <div id="summon-result-wrapper" class="opacity-0 scale-50 transition-all duration-500 z-10 overflow-hidden w-16 h-16 flex items-center justify-center"><div class="pixel-pet-64 pet-idle-64-fluid"></div></div>
+                                    <div id="summon-result-wrapper" class="opacity-0 scale-50 transition-all duration-500 z-10 text-3xl">🐈</div>
                                 </div>
                                 <p id="summon-tips" class="text-[11px] opacity-50 text-center font-occult px-4 leading-relaxed">往古籍中注入 100 盎司的星光，即可在星域中随机具象化一位高维伴灵。</p>
                             </div>
@@ -831,7 +850,21 @@
                   
                 if (appPhase === 'interacting' && allFlipped && !movingCards.length && !spreadCards.some(sc => sc.isFlipping)) {   
                     appPhase = 'converging'; convergeStartTime = Date.now();   
-                    setTimeout(() => { appPhase = 'finished'; coreEnergy = 0; coreRadius = 0; particles = []; dom.decodeModule.classList.toggle('btn-hidden', 'btn-reveal'); }, CONVERGE_DURATION);   
+                    setTimeout(() => { 
+                    appPhase = 'finished'; coreEnergy = 0; coreRadius = 0; particles = []; 
+                    dom.decodeModule.classList.remove('btn-hidden'); dom.decodeModule.classList.add('btn-reveal'); 
+                    
+                    // 🌟 开牌结束，伴灵从虚空重组
+                    const petEl = document.querySelector('.web-pet');
+                    if (petEl) {
+                        petEl.style.left = '50%'; petEl.style.top = '60%'; petEl.style.transform = 'translateX(-50%)';
+                        petEl.classList.remove('mist-dissipate');
+                        petEl.classList.add('mist-reform');
+                        for(let i = 0; i < 20; i++) {
+                            particles.push(new LightParticle(width/2, targetCoreY - 60));
+                        }
+                    }
+                }, CONVERGE_DURATION);   
                 }  
             }  
             requestAnimationFrame(render);  
@@ -851,11 +884,41 @@
                 if (!tabSpirit || !tabPet || !belt) return;
                 const spiritContent = document.getElementById('nexus-spirit-placeholder').parentElement;
                 const petContent = document.getElementById('pet-panel-main');
-                tabSpirit.onclick = (e) => { e.stopPropagation(); belt.style.transform = 'translateX(0%)'; petContent.style.visibility = 'hidden'; spiritContent.style.visibility = 'visible'; tabSpirit.className = 'px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] bg-[var(--gold)] text-black font-medium transition-all duration-300'; tabPet.className = 'px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] text-[var(--gold)]/60 transition-all duration-300'; };
-                tabPet.onclick = (e) => { e.stopPropagation(); belt.style.transform = 'translateX(-50%)'; spiritContent.style.visibility = 'hidden'; petContent.style.visibility = 'visible'; tabPet.className = 'px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] bg-[var(--gold)] text-black font-medium transition-all duration-300'; tabSpirit.className = 'px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] text-[var(--gold)]/60 transition-all duration-300'; };
+                
+                tabSpirit.onclick = (e) => { 
+                    e.stopPropagation(); belt.style.transform = 'translateX(0%)'; 
+                    petContent.style.visibility = 'hidden'; spiritContent.style.visibility = 'visible'; 
+                    tabSpirit.className = 'px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] bg-[var(--gold)] text-black font-medium transition-all duration-300'; 
+                    tabPet.className = 'px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] text-[var(--gold)]/60 transition-all duration-300'; 
+                };
+                tabPet.onclick = (e) => { 
+                    e.stopPropagation(); belt.style.transform = 'translateX(-50%)'; 
+                    spiritContent.style.visibility = 'hidden'; petContent.style.visibility = 'visible'; 
+                    tabPet.className = 'px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] bg-[var(--gold)] text-black font-medium transition-all duration-300'; 
+                    tabSpirit.className = 'px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] text-[var(--gold)]/60 transition-all duration-300'; 
+                };
+                
                 document.getElementById('go-to-summon-btn').onclick = (e) => { e.stopPropagation(); document.getElementById('pet-panel-summon').style.transform = 'translateY(0%)'; };
-                document.getElementById('back-to-pet-main').onclick = (e) => { e.stopPropagation(); document.getElementById('pet-panel-summon').style.transform = 'translateY(100%)'; document.getElementById('summon-portal').classList.remove('portal-active'); document.getElementById('summon-result-wrapper').className = 'opacity-0 scale-50 transition-all duration-500 z-10 overflow-hidden w-16 h-16 flex items-center justify-center'; document.getElementById('summon-tips').innerText = '往古籍中注入 100 盎司的星光，即可在星域中随机具象化一位高维伴灵。'; };
-                document.getElementById('execute-summon-btn').onclick = (e) => { e.stopPropagation(); const portal = document.getElementById('summon-portal'); const tips = document.getElementById('summon-tips'); const resultWrap = document.getElementById('summon-result-wrapper'); portal.classList.add('portal-active'); tips.innerText = '星轨重组中……灵质正在跨维度具象化……'; setTimeout(() => { portal.classList.remove('portal-active'); resultWrap.className = 'opacity-100 scale-110 duration-500 z-10 overflow-hidden w-16 h-16 flex items-center justify-center'; tips.innerHTML = '🎉 成功缔结灵境契约：<span class="text-[var(--gold)]">午夜黑猫</span>！<br><span class="italic opacity-60">"本座才不是什么普通家猫！"</span>'; }, 1500); };
+                document.getElementById('back-to-pet-main').onclick = (e) => { 
+                    e.stopPropagation(); document.getElementById('pet-panel-summon').style.transform = 'translateY(100%)'; 
+                    document.getElementById('summon-portal').classList.remove('portal-active'); 
+                    document.getElementById('summon-result-wrapper').className = 'opacity-0 scale-50 transition-all duration-500 z-10 text-3xl'; 
+                    document.getElementById('summon-tips').innerText = '往古籍中注入 100 盎司的星光，即可在星域中随机具象化一位高维伴灵。'; 
+                };
+                
+                document.getElementById('execute-summon-btn').onclick = (e) => { 
+                    e.stopPropagation(); 
+                    const portal = document.getElementById('summon-portal'); 
+                    const tips = document.getElementById('summon-tips'); 
+                    const resultWrap = document.getElementById('summon-result-wrapper'); 
+                    portal.classList.add('portal-active'); 
+                    tips.innerText = '星轨重组中……灵质正在跨维度具象化……'; 
+                    setTimeout(() => { 
+                        portal.classList.remove('portal-active'); 
+                        resultWrap.className = 'opacity-100 scale-110 duration-500 z-10 text-3xl'; 
+                        tips.innerHTML = '🎉 成功重铸伴灵契约！<br><span class="italic opacity-60">"虚空波长已稳定接通。"</span>'; 
+                    }, 1500); 
+                };
             }
         };
         NexusController.init();
