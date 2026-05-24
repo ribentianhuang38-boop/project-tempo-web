@@ -98,7 +98,7 @@
         }  
           
         canvas { position: absolute; top: 0; left: 0; z-index: 5; width: 100vw; height: 100vh; pointer-events: auto; transition: z-index 0s; }  
-        .layer-10 { z-index: 10; } .layer-20 { z-index: 20; } .layer-40 { z-index: 40; }  
+        .layer-10 { z-index: 10; } .layer-20 { z-index: 20; } .layer-30 { z-index: 30; } .layer-40 { z-index: 40; }  
           
         /* 彻底移除滑条 */  
         .no-scrollbar::-webkit-scrollbar { display: none; }  
@@ -276,17 +276,17 @@
     </div>  
   
     <!-- 🌌 灵境枢纽 -->
-    <div id="page-2a" class="fixed inset-0 translate-y-full transition-transform duration-500 layer-20 flex flex-col pointer-events-none opacity-0 select-none" style="background: radial-gradient(circle at 50% 30%, var(--bg-center) 0%, var(--bg-edge) 100%);">
-        <div class="absolute left-6 right-6 z-50 pointer-events-auto safe-top-nav flex justify-between items-center h-12">
+    <div id="page-2a" class="fixed inset-0 translate-y-full transition-transform duration-500 layer-30 flex flex-col pointer-events-auto opacity-0 select-none" style="background: radial-gradient(circle at 50% 30%, var(--bg-center) 0%, var(--bg-edge) 100%);">
+        <div class="absolute left-6 right-6 z-50 safe-top-nav flex justify-between items-center h-12">
             <button id="back-from-2a" class="text-[var(--gold)] text-sm tracking-[0.2em] cursor-pointer font-occult transition-opacity hover:opacity-80">← EXIT HALL</button>
-            <div class="flex items-center space-x-1 border border-[var(--gold)]/20 rounded-full p-0.5 bg-black/20 font-occult pointer-events-auto">
+            <div class="flex items-center space-x-1 border border-[var(--gold)]/20 rounded-full p-0.5 bg-black/20 font-occult">
                 <button id="tab-spirit" class="px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] bg-[var(--gold)] text-black font-medium transition-all duration-300">Pact/牌灵</button>
                 <button id="tab-pet" class="px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] text-[var(--gold)]/60 transition-all duration-300">Familiar/灵宠</button>
             </div>
             <span class="text-[var(--gold)]/40 text-[10px] tracking-[0.4em] font-occult hidden sm:inline">NEXUS v1.0</span>
         </div>
         <div class="flex-1 w-full overflow-hidden relative">
-            <div id="nexus-belt" class="absolute inset-0 flex w-[200%] transition-transform duration-500 cubic-bezier(0.25, 1, 0.5, 1) pointer-events-auto">
+            <div id="nexus-belt" class="absolute inset-0 flex w-[200%] transition-transform duration-500">
                 <div class="w-1/2 h-full flex items-center justify-center p-6 pt-24 pb-12">
                     <div class="w-full max-w-sm frosted rounded-3xl p-6 border border-[var(--gold)]/20 flex flex-col items-center justify-between h-full max-h-[500px] shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
                         <div class="w-full text-center"><p class="text-[10px] tracking-[0.3em] opacity-40 uppercase font-occult mb-1">Arcana Pact</p><h3 class="text-[var(--gold)] text-lg tracking-[0.2em] font-occult">已缔结的牌灵</h3></div>
@@ -296,7 +296,7 @@
                 </div>
                 <div class="w-1/2 h-full flex items-center justify-center p-6 pt-24 pb-12">
                     <div class="w-full max-w-sm frosted rounded-3xl p-6 border border-[var(--gold)]/20 flex flex-col items-center justify-between h-full max-h-[500px] shadow-[0_12px_40px_rgba(0,0,0,0.5)] relative overflow-hidden">
-                        <div id="pet-panel-main" class="w-full h-full flex flex-col justify-between transition-all duration-500">
+                        <div id="pet-panel-main" class="w-full h-full flex flex-col justify-between">
                             <div class="w-full text-center"><p class="text-[10px] tracking-[0.3em] opacity-40 uppercase font-occult mb-1">Entity Status</p><h3 class="text-[var(--gold)] text-lg tracking-[0.2em] font-occult">伴灵育成境域</h3></div>
                             <div class="w-full flex-1 flex flex-col justify-center space-y-4 my-4 px-2 font-occult">
                                 <div class="flex items-center space-x-4 bg-black/20 p-3 rounded-2xl border border-white/5">
