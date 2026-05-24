@@ -854,21 +854,11 @@
                     appPhase = 'finished'; coreEnergy = 0; coreRadius = 0; particles = []; 
                     dom.decodeModule.classList.remove('btn-hidden'); dom.decodeModule.classList.add('btn-reveal'); 
                     
-                    // 🌟 开牌结束，伴灵从虚空重组
-                    const petEls2 = document.querySelectorAll('.web-pet, div[class*="pet"]');
-                    petEls2.forEach(petEl => {
-                        petEl.style.removeProperty('display');
-                        petEl.style.setProperty('visibility', 'visible', 'important');
-                        petEl.style.setProperty('pointer-events', 'auto', 'important');
-                        petEl.style.setProperty('transition', 'opacity 1s ease, filter 1s ease, transform 1s cubic-bezier(0.34,1.56,0.64,1)', 'important');
-                        petEl.style.setProperty('opacity', '0', 'important');
-                        petEl.style.setProperty('filter', 'blur(16px)', 'important');
-                        petEl.style.setProperty('transform', 'scale(0.5) translateY(30px)', 'important');
-                        void petEl.offsetWidth;
-                        petEl.style.setProperty('opacity', '1', 'important');
-                        petEl.style.setProperty('filter', 'blur(0px)', 'important');
-                        petEl.style.setProperty('transform', 'scale(1) translateY(0)', 'important');
-                    });
+                    // 🌟 用 jQuery 恢复 web-pet
+                    const $pet2 = window.$ ? window.$('.web-pet') : null;
+                    if ($pet2 && $pet2.length) {
+                        $pet2.stop(true).fadeIn(1000);
+                    }
                     for(let i = 0; i < 20; i++) {
                         particles.push(new LightParticle(width/2, targetCoreY - 60));
                     }
@@ -876,13 +866,10 @@
                 }  
             }  
             // 同步 canvas 层级：牌灵阶段提升到 page-2a 同层
-            const page2aVisible = !dom.p2a.classList.contains('translate-y-full');
-            if ((appPhase === 'spirit_intro' || appPhase === 'spirit_revealing' || appPhase === 'spirit_revealed' || appPhase === 'spirit_carousel') && !page2aVisible) {
+            if (appPhase === 'spirit_intro' || appPhase === 'spirit_revealing' || appPhase === 'spirit_revealed' || appPhase === 'spirit_carousel') {
                 canvas.style.zIndex = '25';
-                canvas.style.pointerEvents = 'auto';
             } else {
                 canvas.style.zIndex = '5';
-                canvas.style.pointerEvents = 'auto';
             }
             requestAnimationFrame(render);
         }
